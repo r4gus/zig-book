@@ -187,13 +187,13 @@
       h(7pt, weak: true)
     }
 
-    
+    counter(heading).update(n => n + 1)
 
     v(5%)
       align(
         top + right, 
         [
-          #text(2em, weight: 400, block([
+          #text(1.4em, weight: 400, block([
             #if text.lang == "de" {
               "Kapitel"
             } else {
@@ -202,12 +202,19 @@
             #counter(heading).display()
           ]))
           #line(length: 100%)
-          #text(2em, weight: 700, block([#number #it.body]))
+          #text(1.6em, weight: 700, [#number #it.body])
         ]
       )
-     v(1.25em)
+     v(3.25em)
   }
-  show heading: set text(11pt, weight: 400)
+
+  show heading.where(level: 2): it => {
+    text(1.4em, weight: 600, [#it.body])
+  }
+
+  show heading.where(level: 3): it => {
+    text(1.2em, weight: 600, [#it.body])
+  }
   
   // Page numbering starts with the first chapter 
   counter(page).update(1)

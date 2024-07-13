@@ -13,4 +13,6 @@
   ],
 )
 
-= Zig Crash Course
+#include "chapters/chapter01.typ"
+#include "chapters/chapter02.typ"
+#include "chapters/chapter03.typ"
