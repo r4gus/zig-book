@@ -1,0 +1,10 @@
+[package]
+name = "Zig Basics"
+version = "0.1.0"
+compiler = "0.10.0"
+entrypoint = "lib.typ"
+repository = "https://github.com/r4gus/zig-book"
+authors = ["David P. Sugar <david@thesugar.de>"]
+description = "A book teaching the basics of Zig"
+keywords = ["book", "zig", "programming"]
+categories = ["book"]
