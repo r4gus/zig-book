@@ -10,7 +10,7 @@ Um Zig zu installieren besuchen Sie die Seite #link("https://ziglang.org") und f
 
 Die Installation ist unter allen Betriebssystemen relativ einfach durchzuführen. In der Download Sektion #footnote[https://ziglang.org/download/] finden Sie vorkompilierte Zig-Compiler für die gängigsten Betriebssysteme, darunter Linux, macOS und Windows, sowie Architekturen. 
 
-Unter linux können Sie mit dem Befehl `uname -a` Ihre Architektur bestimmen. In meinem Fall ist dies `X86_64`.
+Unter Linux können Sie mit dem Befehl `uname -a` Ihre Architektur bestimmen. In meinem Fall ist dies `X86_64`.
 
 ```bash
 $ uname -a
@@ -59,7 +59,7 @@ Danach erweitern wir die `$PATH` Umgebungsvariable um den Pfad zu unserem Zig-Co
 export PATH="$PATH:/usr/local/bin/zig-linux-x86_64-0.13.0"
 ```
 
-Nach änderung der Konfigurationsdatei muss diese neu geladen werden. Dies kann entweder durch das öffnen eines neuen Terminalfensters erfolgen oder wir führen im derzeitigen Terminal das Kommando `source .bashrc` in unserem Home-Verzeichnis aus. Danach können wir zum überprüfen, ob alles korrekt installiert wurde, das Zig-Zen auf der Kommandozeile ausgeben lassen. Das Zig-Zen kann als die Kernprinzipien der Sprache und ihrer Community angesehen werden, wobei man dazu sagen muss, dass es nicht "die eine" Community gibt.
+Nach Änderung der Konfigurationsdatei muss diese neu geladen werden. Dies kann entweder durch das öffnen eines neuen Terminalfensters erfolgen oder wir führen im derzeitigen Terminal das Kommando `source .bashrc` in unserem Home-Verzeichnis aus. Danach können wir zum überprüfen, ob alles korrekt installiert wurde, das Zig-Zen auf der Kommandozeile ausgeben lassen. Das Zig-Zen kann als die Kernprinzipien der Sprache und ihrer Community angesehen werden, wobei man dazu sagen muss, dass es nicht "die eine" Community gibt.
 
 ```bash
 $ source ~/.bashrc
@@ -162,6 +162,8 @@ Eine Besonderheit, die Zig von anderen Sprachen unterscheidet ist, dass Integer 
 Alle Zig-Basistypen sind Teil des selben `union`: std.builtin.Type. Das union beinhaltet den `Int` Typ welcher ein `struct` mit zwei Feldern ist, `signedness` und `bits`, wobei `bits` vom Typ `u16` ist, d.h. es können alle Integer-Typen zwischen 0 und $2^16 - 1$ Bits verwendet werden. Ja Sie hören richtig, der Zig-Compiler ist seit Version 0.10.0 selbst in Zig geschrieben, d.h. er ist self-hosted.
 ])
 
+
+
 Innerhalb des Funktonskörpers werden mittels `if` verschiedene Bedingungen abgefragt. Sollte eine beider Zahlen 0 sein, so wird die andere zurückgegeben, ansonsten wird `gcd` rekursiv aufgerufen bis eine beider Zahlen 0 ist. Wie auch bei C muss die Bedingung in runde Klammern gefasst werden. Bei Einzeilern können die geschweiften Klammern um einen Bedingungsblock weggelassen werden. In diesem Fall wird der Inhalt des Bedingungsblocks an den umschließenden Block gereicht.
 
 Mittels eines `return` Statements kann von einer Funktion in die aufrufende Funktion zurückgekehrt werden. Das Statement nimmt bei bedarf zusätzlich einen Wert der an die aufrufende Funktion zurückgegeben werden soll. Im obigen Beispiel gibt `gcd` mittels `return` den Wert des ausgeführten Bedingungsblocks zurück.
@@ -197,6 +199,80 @@ test "main tests" {
 ``` 
 
 == Comptime
+
+Die meisten Sprachen erlauben eine Form von Metaprogrammierung, d.h. das Schreiben von Code der wiederum Code generiert. In C können die gefürchteten Makros mit dem Präprozessor verwendet werden und Rust bietet sogar zwei verschiedene Typen von Makros, jeweils mit einer eigenen Syntax. Zig bietet mit `comptime` seine eigene Form der Metaprogrammierung. Was Zig von anderen kompilierten Sprachen unterscheidet ist, dass die Metaprogrammierung in der Sprache selber erfolgt, d.h., wer Zig programmieren kann, der hat alles nötige Handwerkszeug um auch Metaprogrammierung in Zig zu betreiben.
+
+Ein Aufgabe für die Metaprogrammierung sehr gut geeignet ist, ist die Implementierung von Container-Typen wie etwa `std.ArrayList`. Eine `ArrayList` ist ein Liste von Elementen eines beliebigen Typen, die eine Menge an Standardfunktionen bereitstellt um die Liste zu manipulieren. Nun wäre es sehr aufwändig die `ArrayList` für jeden Typen einzeln implementieren zu müssen. Aus diesem Grund ist `ArrayList` als Funktion implementiert, welche zur Compilezeit einen beliebigen Typen übergeben bekommt auf Basis dessen ein eigener `ArrayList`-Typ generiert wird. 
+
+```zig
+var list = std.ArrayList(u8).init(allocator);
+try list.append(0x00);
+```
+
+Der Funktionsaufruf `ArrayList(u8)` wird zur Compilezeit ausgewertet und gibt einen neuen Listen-Typen zurück, mit dem sich eine Liste an `u8` Objekten managen lassen. Auf diesem Typ wird `init()` aufgerufen um eine neu Instanz des Listen-Typs zu erzeugen. Mit der Funktion `append()` kann z.B., ein Element an das Ende der Liste angehängt werden. Eine stark simplifizierte Version von `ArrayList` könnte wie folgt aussehen.
+
+```zig
+// chapter01/my-arraylit.zig
+const std = @import("std");
+
+// Die Funktion erwartet als Compilezeitargument einen Typen `T`
+// und gibt ein Struct zurück, dass einen Wrapper um einen Slice
+// des Type `T` darstellt.
+//
+// Der Wrapper implementiert Funktionen zum managen des Slices
+// und unterstützt unter anderem:
+// - das Hinzufügen neuer Elemente
+pub fn MyArrayList(comptime T: type) type {
+    return struct {
+        items: []T,
+        allocator: std.mem.Allocator,
+
+        // Erzeuge eine neue Instanz von MyArrayList(T).
+        // Der übergebene Allocator wird von dieser Instanz gemanaged.
+        pub fn init(allocator: std.mem.Allocator) @This() {
+            return .{
+                .items = &[_]T{},
+                .allocator = allocator,
+            };
+        }
+
+        pub fn deinit(self: *@This()) void {
+            self.allocator.free(self.items);
+        }
+
+        // Füge da Element `e` vom Typ `T` ans ende der Liste.
+        pub fn append(self: *@This(), e: T) !void {
+            // `realloc()` kopiert die Daten bei Bedarf in den neuen
+            // Speicherbereich aber die Allokation kann auch
+            // fehlschlagen. An dieser Stelle verbleiben wir der
+            // Einfachheit halber bei einem `try`.
+            self.items = try self.allocator.realloc(self.items, self.items.len + 1);
+            self.items[self.items.len - 1] = e;
+        }
+    };
+}
+
+pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+
+    var list = MyArrayList(u8).init(allocator);
+    defer list.deinit();
+
+    try list.append(0xAF);
+    try list.append(0xFE);
+
+    std.log.info("{s}", .{std.fmt.fmtSliceHexLower(list.items[0..])});
+}
+```
+
+Mit dem `comptime` Keyword sagen wir dem Compiler, dass das Argument `T` zur Compilezeit erwartet wird. Beim Aufruf von `MyArrayList(u8)` wertet der Compiler die Funktion aus und generiert dabei einen neuen Typen. Das praktische ist, dass wir die eigentliche Funktionalität der unserer ArrayList nur einmal implementieren müssen.
+
+Der `comptime` Typ `T` kann innerhalb und auch außerhalb des von der Fukntion `MyArrayList` zurückgegebenen Structs, anstelle eines expliziten Typs, verwendet werden. 
+
+Structs die mit `init()` initialisiert und mit `deinit()` deinitialisiert werden sind ein wiederkehrendes Muster in Zig. Dabei erwartet `init()` meist einen `std.mem.Allocator` der von der erzeugten Instanz verwaltet wird.
+
+Ein weiterer Anwendungsfall bei dem Comptime zum Einsatz kommen kann ist die Implementierung von Parsern. Ein Beispiel hierfür ist der Json-Parser der Standardbibliothek (`std.json`), welcher dazu verwendet werden kann um Zig-Typen in Json zu serialisieren und umgekehrt #footnote[Die JavaScript Object Notation (JSON) ist eines der gängigsten Datenformate und wird unter anderem zur Übermittlung von Daten im Web verwendet (#link("https://en.wikipedia.org/wiki/JSON")).].
 
 == Kommandozeilenargumente
 
