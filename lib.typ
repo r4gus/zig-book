@@ -121,7 +121,15 @@
   show par: set block(spacing: 1em)
 
   // Start with a chapter outline.
-  outline(title: [Chapters])
+  outline(title: [
+    #if language == "de" {
+      "Inhaltsverzeichnis"
+    } else {
+      "Chapters"
+    }
+    ],
+    indent: 1.3em,
+  )
 
   pagebreak(to: "odd")
 
