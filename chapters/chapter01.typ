@@ -99,7 +99,7 @@ Das Kommando initialisiert den gegebenen Ordner mit Template-Dateien, durch die 
 
 Die Datei `build.zig.zon` enthält weitere Informationen über das Projekt, darunter dessen Namen, die Versionsnummer, sowie mögliche Dependencies. Dependencies können dabei lokal vorliegen und über einen relativen Pfad angegeben oder von einer Online-Quelle, wie etwa Github, bezogen werden. Die Endung der Datei steht im übrigen für Zig Object Notation (ZON), eine Art Konfigurationssprache für Zig, die derzeit, genauso wie Zig selbst, noch nicht final ist.
 
-Schauen wir in `src/main.zig`, so sehen wir das Zig für uns ein kleines Programm, inklusive Test, geschrieben hat.
+Schauen wir in `src/main.zig`, so sehen wir das Zig für uns ein kleines Programm geschrieben hat.
 
 ```zig
 const std = @import("std");
@@ -115,14 +115,52 @@ pub fn main() !void {
 
     try bw.flush(); // don't forget to flush!
 }
-
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
-}
 ```
+
+Der Code kann auf den ersten Blick überwältigend wirken, schauen wir ihn uns deswegen Stück für Stück an.
+
+```zig
+const std = @import("std");
+```
+
+Mit der `@import()` Funktion importieren wir die Standardbibliothek (`std`) und binden diese an eine Konstante mit dem selben Namen.
+Die Standardbibliothek ist eine Ansammlung von nützlichen Funktionen und Datentypen, die während der Entwicklung von Anwendungen
+häufiger zum Einsatz kommen und deswegen vom Zig zur Verfügung gestellt werden. Die Funktion `@import()` wird nicht nur zum importieren
+der Standardbibliothek verwendet, sondern auch um auf Module und andere, zu einem Projekt gehörende, Quelldateien zuzugreifen.
+
+Nach der Definition der Konstante `std` beginnt die `main` Funktion:
+
+```zig
+pub fn main() !void {
+```
+
+Unsere `main` Funktion beginnt, wie alle Funktionen, mit `fn` und dem Namen der Funktion. Sie gibt keinen Wert zurück, aus diesem Grund folgt auf die leere Parameterliste `()` der Rückgabetyp `void`. Das Ausrufezeichen `!` weist darauf hin, das die Funktion einen Fehler zurückgeben kann.
+
+```zig
+std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+```
+
+Als erstes gibt die `main` Funktion einen String über die Debugausgabe auf der Kommandozeile aus. Die Funktion `print` erwartet dabei einen Format-String, der mit Platzhaltern (z.B. `{s}`) angereichert werden kann, sowie eine Liste an Ausdrücken (z.B. `.{"codebase"}`) deren Werte in den String eingefügt werden sollen. Der Platzhalter `{s}` gibt z.B. an, dass an der gegebenen Stelle ein String eingefügt werden soll. Neben `s` gibt es unter anderem noch `d` für Ganzzahlen und `any` für beliebige werte. 
+
+```zig
+const stdout_file = std.io.getStdOut().writer();
+var bw = std.io.bufferedWriter(stdout_file);
+const stdout = bw.writer();
+```
+
+Via `std.io` können wir mit `getStdIn()`, `getStdOut()` und `getStdErr()` auf `stdin`, `stdout` und `stderr` zugreifen. Alle drei Funktionen geben jeweils eine Objekt vom Typ `File` zurück. Die Funktion `writer()` welche auf der stdout-Datei aufgerufen wird, gibt einen `Writer` zurück. Ein `Writer` ist ein Wrapper um einen beliebiges Datenobjekt (z.B. eine offene Datei, ein Array, ...) und stellt eine standartisiertes Interface zur Verfügung um Daten zu serialisieren. In unserem Fall wird der `stdout_file` Writer wiederum in einen `BufferedWriter` gewrapped, welcher nicht bei jedem einzelnen Schreibvorgang auf die Datei `stdout` zugreift, sondern erst wenn genug Daten geschrieben wurden bzw. wenn die Funktion `flush()` aufgerufen wird. Die Konstante `stdout` ist also ein `Writer` der einen `Writer` umschließt, der eine Datei umschließt, in die schlussendlich geschrieben werden soll.
+
+```zig
+try stdout.print("Run `zig build test` to run the tests.\n", .{});
+```
+
+Der `BufferedWriter` (`stdout`) wird verwendet um (indirekt) den String "Run zig build test to run the tests." nach stdout (standardmäßig die Kommandozeile) zu schreiben. Da diese Schreiboperation fehlschlagen kann wird vor den Ausdruck ein `try` gestellt. Damit wird ein potenzieller Fehler "nach oben" propagiert, was im gegebenen Fall zu einem Programmabsturz führen würde, da `main` keine Funktion über sich besitzt. Als Alternative könnte mit einem `catch` Block der Fehler explizit abgefangen werden.
+
+```zig
+try bw.flush();
+```
+
+Um sicher zu gehen, dass auch alle Daten aus dem `BufferedWriter` tatsächlich geschrieben wurden, muss schlussendlich `flush()` aufgerufen werden.
 
 Das von Zig vorbereitete "Hello, World"-Programm kann mit `zig build run`, von einem beliebigen Ordner innerhalb des Zig-Projekts, ausgeführt werden.
 
