@@ -367,8 +367,213 @@ Reflexion kann in vielen Situationen äußerst nützlich sein, darunter der Impl
 
 == Parallelität
 
-== Cross Compilation
+== C/C++ Build System
 
 Wie wir anfangs gesehen haben bietet `zig` nicht nur einen Compiler, sondern ein vollständiges Build-System. Die Beschreibung, wie ein Projekt gebaut werden soll, erfolgt dabei direkt in Zig und nicht in einer eigenen Sprache wie Sie es vielleicht von Make oder CMake gewohnt sind. Das besondere ist, dass `zig` nicht nur eine Build-System für die Sprache Zig bereitstellt, sondern auch als Build-System für C und C++ Projekte verwendet werden kann und damit u.a. eine Alternative zu Make und CMake darstellt. Dies unterstreicht die enge Beziehung zwischen Zig und C bzw. C++.
 
+Um zu demonstrieren wie Sie Zig als Build-System für ein C Projekt verwenden können, werden wir für _https\:\/\/github.com/libusb/hidapi_ #footnote[https://github.com/libusb/hidapi] ein kleines, unvollständiges Build-Skript schreiben und im Anschluss für eine kleine Beispielanwendung verwenden. Zuerst müssen wir mittels *`git clone https://github.com/libusb/hidapi.git`* das Projekt beziehen. Danach wechseln wir in den Ordner _hidapi_ und erstellen eine neue Datei mit dem Namen _build.zig_.
 
+```bash
+git clone https://github.com/libusb/hidapi.git
+cd hidapi
+touch build.zig
+```
+
+=== Bibliothek
+
+Wird von einem C bzw. C++ Projekt bereits ein Build-System verwendet, so lohnt es sich die zugehörigen Dateien zu analysieren um ein Verständniss davon zu bekommen, wie das Projekt derzeit gebaut wird. Im gegebenen Fall ist dies CMake, d.h., wir schauen uns zuerst die Datei _CMakeLists.txt_ an. Ein Großteil des Inhalts der Datei ist für unsere Absichten erst einaml irrelevent und hat größtenteils mit der Konfiguration des Projekts zu tun. Zu diesem Zeitpunkt möchten wir hidapi jedoch lediglich für Linux, ohne besondere Optionen, compilieren. Aus diesem Grund schauen wir nach weiteren Unterordnern, die von _CMakeLists.txt_ eingebunden werden. Einer davon ist _src_.
+
+```CMake
+add_subdirectory(src)
+```
+
+Zwei Dinge die wir von _src/CMakeLists.txt_ entnehmen können ist, dass das Projekt genau eine Header-Datei enthält (_hidapi/hidapi.h_) und dass für jedes Target (Linux, BSD, macOS und Windows) ein eigener Unterordner existiert. Die Datei _linux/CMakeLists.txt_ wird uns für diese Beispiel als Vorlage dienen.
+
+```CMake
+cmake_minimum_required(VERSION 3.6.3...3.25 FATAL_ERROR)
+
+add_library(hidapi_hidraw
+    ${HIDAPI_PUBLIC_HEADERS}
+    hid.c
+)
+target_link_libraries(hidapi_hidraw PUBLIC hidapi_include)
+
+find_package(Threads REQUIRED)
+
+include(FindPkgConfig)
+pkg_check_modules(libudev REQUIRED IMPORTED_TARGET libudev)
+
+target_link_libraries(hidapi_hidraw PRIVATE PkgConfig::libudev Threads::Threads)
+
+set_target_properties(hidapi_hidraw
+    PROPERTIES
+        EXPORT_NAME "hidraw"
+        OUTPUT_NAME "hidapi-hidraw"
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        PUBLIC_HEADER "${HIDAPI_PUBLIC_HEADERS}"
+)
+
+# compatibility with find_package()
+add_library(hidapi::hidraw ALIAS hidapi_hidraw)
+# compatibility with raw library link
+add_library(hidapi-hidraw ALIAS hidapi_hidraw)
+
+if(HIDAPI_INSTALL_TARGETS)
+    install(TARGETS hidapi_hidraw EXPORT hidapi
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/hidapi"
+    )
+endif()
+
+hidapi_configure_pc("${PROJECT_ROOT}/pc/hidapi-hidraw.pc.in")
+```
+
+Als erstes definieren wir eine neue Bibliothek und geben dieser einen Namen, sowie Informationen über das Target (z.B. X86\_64 Linux) sowie Informationen zu gewünschten Optimierungen. Außerdem definieren wir eine Option, um Anwendern die Möglichkeit zu geben zwischen einer statischen oder dynamsichen Bibliothek zu wählen. Als Default wählen wir dabei `true`, d.h. standardmäßig wird eine statische Bibliothek gebaut.
+
+```zig
+// hidapi/build.zig
+const std = @import("std");
+
+pub fn build(b: *std.Build) void {
+    const static = b.option(bool, "static", "Make a static library") orelse true;
+
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
+    const lib = if (static) blk: {
+        break :blk b.addStaticLibrary(.{
+            .name = "hidapi",
+            .target = target,
+            .optimize = optimize,
+        });
+    } else blk: {
+        break :blk b.addSharedLibrary(.{
+            .name = "hidapi",
+            .target = target,
+            .optimize = optimize,
+        });
+    };
+
+    b.installArtifact(lib);
+}
+```
+
+Nachdem Sie den obigen Code zu _build.zig_ hinzugefügt haben können Sie mittels *`build zig --help`* sich einen Hilfetext ausgeben lassen, der u.a. unsere Option beinhalten sollte.
+
+```bash
+$ build zig --help
+Usage: /usr/local/bin/zig-linux-x86_64-0.13.0/zig build [steps] [options]
+...
+Project-Specific Options:
+  -Dstatic=[bool]              Make a static library
+```
+
+Zwar können wir uns einen Hilfetext anzeigen lassen, jedoch schlägt das Compilieren beim Ausführen von *`build zig`* fehl. Was fehlt ist Quellcode, aus der die Bibliothek gebaut werden soll. Um es einfach zu halten unterstützen wir in diesem Beispiel nur Linux, es steht Ihnen jedoch Frei auch Unterstützung für andere Betriebssysteme hinzuzufügen. Über die `target` Variable können wir u.a. das Betriebssystem, für welches die Bibliothek gebaut werden soll, bestimmen.
+
+#tip-box([
+    Zig unterstützt Cross-Compilation, d.h. Architektur und Betriebssystem auf dem eine Anwendung oder Bibliothek compiliert wird kann sich von der Architektur bzw. dem Betriebssystem unterscheiden, für welches Compiliert wird. Die Variable `target` enthält Informationen über das Zielsystem.
+])
+
+Für unser Beispiel machen wir eine einfache Fallunterscheidung. Sollte das Zielsystem `.linux` sein, so fügen wir die benötigten _.c_ Dateien zu `lib` hinzu und linken zusätzlich die benötigte Bibliothek `libudev`. Andernfalls kehren wir einfach frühzeitig von der `build` Funktion zurück.
+
+```zig
+// hidapi/build.zig
+// ...
+
+if (target.result.os.tag == .linux) {
+    lib.addCSourceFiles(.{
+        .files = &.{"linux/hid.c"},
+        .flags = &.{"-std=gnu11"},
+    });
+
+    // Manche Linux-Distros (z.B. OpenSuse) besitzen keine Developer-Package
+    // von libudev, d.h. es fehlt die Datei `libudev.h`. In diesem Fall kann
+    // die Datei manuell bezogen
+    //    https://github.com/mcatalancid/libudev/blob/1.8.2/src/libudev.h
+    // und in das Projekt integriert werden. In diesem Fall einfach die
+    // folgende Zeile einfügen:
+    // lib.addSystemIncludePath(b.path("./"));
+
+    // Abhängig von der Linux-Distor muss `udev` evtl. durch `libudev` ersetzt werden.
+    lib.linkSystemLibrary("udev");
+} else {
+    // An dieser Stelle wäre eine bessere Fehlerkommunikation angebracht.
+    return;
+}
+
+// Der Unterordner ./hidapi enthält die `hidapi.h` Header-Datei
+lib.addIncludePath(b.path("hidapi"));
+lib.linkLibC();
+
+// ...
+
+b.installArtifact(lib);
+
+```
+
+Beim linken von Bibliotheken mittels `linkSystemLibrary` sucht Zig nach den Bibliotheken in den gängigsten Ordnern, darunter _/usr/lib_. Außerdem werden die zugehörigen Header automatisch dem Include-Pfad hinzugefügt. Oft wird jedoch das Developer-Paket einer Bibliothek benötigt um auch an die Header-Dateien auf seinem System zu gelangen. Im Fall von `libudev` ist ein solches Developer-Paket jedoch nicht unter allen gängigen Linux Distributionen vorhanden, z.B. gibt es unter Ubuntu _libudev-dev_, jedoch nicht unter OpenSuse #footnote[Die Beschaffung benötigter Bibliotheken ist in der Regel "Out-of-Scope", d.h. es ist die Aufgabe des Nutzers die benötigten Bibliotheken auf seinem System zu installieren. Für das gegebene Beispiel habe ich trotzdem ein Kommentar diesbezüglich eingefügt, mit einem Link zur benötigten Header-Datei.].
+
+Da unsere _hidapi_ Bibliothek selber auch _hidapi.h_ zum compilieren benötigt, geben wir dessen relativen Pfad mittels der Funktion `addIncludePath()` an. Außerdem müssen wir bei C bzw. C++ Projekten in den meisten Fällen, mittels `linkLibC()`, die C-Standard-Bibliothek verlinken.
+
+Damit ist unser Build-Script vollständig und wir können mit *`build zig`* unsere Bibliothek (unter Linux bzw. für Linux) bauen. Nach dem Compilieren findet sich diese unter _zig-out/lib_ im Root-Verzeichnis von _hidapi_.
+
+Um die _hidapi_ Bibliothek, welche durch _build.zig_ beschrieben wird, in anderen Zig Projekten einfach verwenden zu können, müssen wir noch zwei Dinge hinzufügen. Zum einen sollten wir die für _hidapi_ benötigten Header (_hidapi/hidapi.h_) exportieren.
+
+```zig
+// hidapi/build.zig
+// ...
+lib.installHeader(b.path("hidapi/hidapi.h"), "hidapi.h");
+// ...
+```
+
+Damit wird beim Linken von _hidapi_ durch ein anderes Zig-Projekt, diesem auch gleichzeitig der Pfad zur Header-Datei mitgeteilt.
+
+Zum anderen wird eine _build.zig.zon_ Datei benötigt, die weitere Informationen zum _hidapi_ Projekt bereitstellt.
+
+```zon
+// hidapi/zig.build.zon
+.{
+    .name = "hidapi",
+    .version = "0.1.0",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        ".builds",
+        "android/jni",
+        "dist",
+        "documentation",
+        "doxygen",
+        "hidapi",
+        "hidtest",
+        "libusb",
+        "linux",
+        "m4",
+        "mac",
+        "pc",
+        "src",
+        "subprojects",
+        "testgui",
+        "udev",
+        "windows",
+        ".appveyor.yml",
+        ".cirrus.yml",
+        ".gitattributes",
+        ".gitignore",
+        "AUTHORS.txt",
+        "HACKING.txt",
+        "LICENSE.txt",
+        "README.md",
+        "VERSION",
+        "bootstrap",
+        "configure.ac",
+        "meson.build",
+    },  
+} 
+```
+
+Die meisten Felder sind dabei selbsterklärend. Das Feld `.paths` gibt an welche Dateien zum gegebenen Projekt gehören, woraus sich u.a. der Paket-Hash berechnet.
+
+=== Verwendung der Bibliothek
