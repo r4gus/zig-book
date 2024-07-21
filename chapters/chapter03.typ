@@ -127,7 +127,7 @@ Das obige Programm übergibt eine Referenz auf die Variable `i` als Argument an 
 
 Die Lifetime der Referenz `a` zu `i` beginnt mit dem Funktionsblock von `foo()` und endet mit dem Ende des Funktionsblocks. Wichtig ist, dass die Lifetime einer Referenz immer innerhalb der Lifetime des referenzierten Objekts liegen muss. Überschreitet die Lifetime einer Referenz die Lifetime des referenzierten Objekts so spricht man von einem dangling Pointer (auf Deutsch hängender Zeiger). Die Verwendung solcher dangling Pointer können zu schwerwiegenden Programmfehlern führen, da der referenzierte Speicher als undefiniert gilt.
 
-Um das Verhalten der Anwendung besser nachvollziehen zu können, besteht die Möglichkeit mithilfe des Programms objdump die kompilierte Anwendung zu disassemblieren: `objdump -d -M intel stack_01`. Der Eintrittspunkt einer jeden Anwendung ist dabei die main Funktion.
+Um das Verhalten der Anwendung besser nachvollziehen zu können, besteht die Möglichkeit mithilfe des Programms objdump die kompilierte Anwendung zu disassemblieren: *`objdump -d -M intel stack_01`*. Der Eintrittspunkt einer jeden Anwendung ist dabei die `main` Funktion.
 
 ```asm
 00000000010349b0 <stack_01.main>:

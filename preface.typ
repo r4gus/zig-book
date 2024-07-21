@@ -1,3 +1,5 @@
+#import "tip-box.typ": tip-box
+
 Zig ist eine Sprache geeignet für die Systemprogrammierung.
 
 TODO
@@ -26,11 +28,31 @@ Grundsätzlich empfehle ich Ihnen parallel zum lesen dieses Buches eigene Progra
 
 Wichtig zu erwähnen ist, dass Zig derzeit noch nicht die Version 1.0 erreicht hat, d.h. die Sprache und damit auch die Standardbibliothek werden sich in Zukunft noch ändern. Damit kann es sein, dass bestimmte Beispiele mit einer zukünftigen Zig-Compiler-Version nicht mehr compilieren. Sollte das für Sie ein Dealbreaker sein, so empfehle ich Ihnen die Finger von diesem Buch zu lassen und zu warten bis Zig Version 1.0 veröffentlicht wurde.
 
+#heading(outlined: false, "Voraussetzungen")
+
+Die Zig-Version, die in diesem Buch verwendet wird ist 0.13.0 #footnote[https://ziglang.org/download/]. Je nachdem wann Sie dieses Buch lesen kann es sein, dass diese Version nicht mehr aktuell ist. Bei Abweichungen von der angegebenen Version ist nicht garantiert, dass die in diesem Buch abgebildeten Beispiele compilieren.
+
+Zwar sind die meisten Konzepte und Beispiele in diesem Buch unabhängig von einem bestimmten Betriebssystem und Architektur, jedoch geht das Buch grundsätzlich von einem x86_64 Linux System aus. Dies wird relevant wenn auf Assembler, Calling-Conventions und ähnliche Konzepte Bezug genommen wird, da diese immer sowohl von der Architektur als auch dem Betriebssystem abhängen. Sollte Ihr Computer eine dieser Anforderungen nicht erfüllen, so empfiehlt es sich ggf. ein virtuelle Maschine zu verwenden #footnote[https://ubuntu.com/tutorials/how-to-run-ubuntu-desktop-on-a-virtual-machine-using-virtualbox#1-overview].
+
 #heading(outlined: false, "Struktur")
 
-Die ersten zwei Kapitel TBD...
+Die ersten drei Kapitel beschäftigen sich mit den Grundlagen der Programmiersprache Zig. Das erste Kapitel bietet anhand von Beispielen einen Überblick über die Sprache. Im zweiten Kapitel werden die grundlegenden Datentypen der Programmiersprache näher beleuchtet. In Kapitel drei wird der Leser in grundlegende Konzepte der Speicherverwaltung eingeführt, die für die korrekte und sichere Entwicklung von Anwendungen unabdingbar sind.
+
+Im zweiten Abschnitt des buches... TBD
 
 Zig bietet für jede Compiler-Version zusätzliche Ressourcen zum Lernen der Sprache und als Referenz #footnote[https://ziglang.org/learn/], darunter die Language Reference und die Online-Dokumentation der Standardbibliothek. Diese können beim Entwickeln eigener Projekte aber auch beim nachvollziehen der Code-Beispiele eine große Hilfe darstellen.
+
+#heading(outlined: false, "Konventionen")
+
+Die folgenden Konventionen werden in diesem Buch eingehalten:
+
+_Italic_: Markiert neue Begriffe, URLs, Email-Adressen, Dateinamen und -endungen.
+
+`Konstanter Abstand`: Wird verwendet für Programmbeispiele, sowie zum benennen von Programmbausteinen, wie etwa Variablennamen oder Umgebungsvariablen.
+
+*`Konstanter Abstand Fett`*: Zeigt Kommandos oder andern, vom Nutzer zu tippenden, Text.
+
+#tip-box([Dieses Icon markiert einen Tipp bzw. einen Hinweis.])
 
 #heading(outlined: false, "Code Beispiele")
 

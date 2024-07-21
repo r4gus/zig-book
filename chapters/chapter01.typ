@@ -10,14 +10,14 @@ Um Zig zu installieren besuchen Sie die Seite #link("https://ziglang.org") und f
 
 Die Installation ist unter allen Betriebssystemen relativ einfach durchzuführen. In der Download Sektion #footnote[https://ziglang.org/download/] finden Sie vorkompilierte Zig-Compiler für die gängigsten Betriebssysteme, darunter Linux, macOS und Windows, sowie Architekturen. 
 
-Unter Linux können Sie mit dem Befehl `uname -a` Ihre Architektur bestimmen. In meinem Fall ist dies `X86_64`.
+Unter Linux können Sie mit dem Befehl *`uname -a`* Ihre Architektur bestimmen. In meinem Fall ist dies `X86_64`.
 
 ```bash
 $ uname -a
 Linux ... x86_64 x86_64 x86_64 GNU/Linux
 ```
 
-Die Beispiele in diesem Buch basieren auf der Zig-Version 0.13.0, d.h. um den entsprechenden Compiler auf meinem Linux system zu installieren würde ich die Datei `zig-linux-x86_64-0.13.0.tar.xz` aus der Download-Sektion herunterladen.
+Die Beispiele in diesem Buch basieren auf der Zig-Version 0.13.0, d.h. um den entsprechenden Compiler auf meinem Linux system zu installieren würde ich die Datei _zig-linux-x86\_64-0.13.0.tar.xz_ aus der Download-Sektion herunterladen.
 
 #figure(
   image("../images/chapter01/zig-versions.png", width: 80%),
@@ -26,7 +26,7 @@ Die Beispiele in diesem Buch basieren auf der Zig-Version 0.13.0, d.h. um den en
   ],
 )
 
-Mit dem `tar` Kommandozeilenwerkzeug kann das heruntergeladene Archiv danach entpackt werden.
+Mit dem _tar_ Kommandozeilenwerkzeug kann das heruntergeladene Archiv danach entpackt werden.
 
 ```bash
 $ tar -xf zig-linux-x86_64-0.13.0.tar.xz
@@ -43,13 +43,13 @@ doc  lib  LICENSE  README.md  zig
 - *lib*: Enthält alle benötigten Bibliotheken, inklusive der Standardbibliothek. Die Standardbibliothek enthält viel nützliche Programmbausteine, darunter geläufige Datenstrukturen, einen JSON-Parser, Kompressionsalgorithmen, kryptographische Algorithmen und Protokolle und vieles mehr. Eine Dokumentation der gesamten Standardbibliothek findet sich online  unter #link("https://ziglang.org/documentation/0.13.0/std/").
 - *zig*: Dies ist der Compiler, den wir im Laufe dieses Buchs exzessiv verwenden werden.
 
-Um den Zig-Compiler nach dem Entpacken auf einem Linux System zu installieren, können wir diesen nach `/usr/local/bin` verschieben.
+Um den Zig-Compiler nach dem Entpacken auf einem Linux System zu installieren, können wir diesen nach _/usr/local/bin_ verschieben.
 
 ```bash
 $ sudo mv zig-linux-x86_64-0.13.0 /usr/local/bin/zig-linux-x86_64-0.13.0
 ```
 
-Danach erweitern wir die `$PATH` Umgebungsvariable um den Pfad zu unserem Zig-Compiler. Dies können wir in der Datei `~/.profile` oder auch `~/.bashrc` machen #footnote[Je nach verwendetem Terminal kann die Konfigurationsdatei auch anders heißen.].
+Danach erweitern wir die `$PATH` Umgebungsvariable um den Pfad zu unserem Zig-Compiler. Dies können wir in der Datei _\~/.profile_ oder auch _\~/.bashrc_ machen #footnote[Je nach verwendetem Terminal kann die Konfigurationsdatei auch anders heißen.].
 
 ```
 # Sample .bashrc for SuSE Linux
@@ -59,7 +59,7 @@ Danach erweitern wir die `$PATH` Umgebungsvariable um den Pfad zu unserem Zig-Co
 export PATH="$PATH:/usr/local/bin/zig-linux-x86_64-0.13.0"
 ```
 
-Nach Änderung der Konfigurationsdatei muss diese neu geladen werden. Dies kann entweder durch das öffnen eines neuen Terminalfensters erfolgen oder wir führen im derzeitigen Terminal das Kommando `source .bashrc` in unserem Home-Verzeichnis aus. Danach können wir zum überprüfen, ob alles korrekt installiert wurde, das Zig-Zen auf der Kommandozeile ausgeben lassen. Das Zig-Zen kann als die Kernprinzipien der Sprache und ihrer Community angesehen werden, wobei man dazu sagen muss, dass es nicht "die eine" Community gibt.
+Nach Änderung der Konfigurationsdatei muss diese neu geladen werden. Dies kann entweder durch das öffnen eines neuen Terminalfensters erfolgen oder wir führen im derzeitigen Terminal das Kommando *`source .bashrc`* in unserem Home-Verzeichnis aus. Danach können wir zum überprüfen, ob alles korrekt installiert wurde, das Zig-Zen auf der Kommandozeile ausgeben lassen. Das Zig-Zen kann als die Kernprinzipien der Sprache und ihrer Community angesehen werden, wobei man dazu sagen muss, dass es nicht "die eine" Community gibt.
 
 ```bash
 $ source ~/.bashrc
@@ -81,7 +81,7 @@ $ zig zen
  * Together we serve the users.
 ```
 
-Mit dem Kommando `zig help` lässt sich ein Hilfetext auf der Kommandozeile anzeigen, der die zu Verfügung stehenden Kommandos auflistet.
+Mit dem Kommando *`zig help`* lässt sich ein Hilfetext auf der Kommandozeile anzeigen, der die zu Verfügung stehenden Kommandos auflistet.
 
 Praktisch ist, dass Zig für uns ein neues Projekt, inklusive Standardkonfiguration, anlegen kann.
 
@@ -95,11 +95,11 @@ info: created src/root.zig
 info: see `zig build --help` for a menu of options
 ```
 
-Das Kommando initialisiert den gegebenen Ordner mit Template-Dateien, durch die sich sowohl eine Executable, als auch eine Bibliothek bauen lassen. Schaut man sich die erzeugten Dateien an so sieht man, dass Zig eine Datei namens `build.zig` erzeugt hat. Bei dieser handelt es sich um die Konfigurationsdatei des Projekts. Sie beschreibt aus welchen Dateien eine Executable bzw. Bibliothek gebaut werden soll und welche Abhängigkeiten (zu anderen Bibliotheken) diese besitzen. Ein bemerkenswertes Detail ist dabei, dass `build.zig` selbst ein Zig Programm ist, welches in diesem Fall zur Compile-Zeit ausgeführt wird um die eigentlichle Anwendung zu bauen.
+Das Kommando initialisiert den gegebenen Ordner mit Template-Dateien, durch die sich sowohl eine Executable, als auch eine Bibliothek bauen lassen. Schaut man sich die erzeugten Dateien an so sieht man, dass Zig eine Datei namens _build.zig_ erzeugt hat. Bei dieser handelt es sich um die Konfigurationsdatei des Projekts. Sie beschreibt aus welchen Dateien eine Executable bzw. Bibliothek gebaut werden soll und welche Abhängigkeiten (zu anderen Bibliotheken) diese besitzen. Ein bemerkenswertes Detail ist dabei, dass _build.zig_ selbst ein Zig Programm ist, welches in diesem Fall zur Compile-Zeit ausgeführt wird um die eigentlichle Anwendung zu bauen.
 
-Die Datei `build.zig.zon` enthält weitere Informationen über das Projekt, darunter dessen Namen, die Versionsnummer, sowie mögliche Dependencies. Dependencies können dabei lokal vorliegen und über einen relativen Pfad angegeben oder von einer Online-Quelle, wie etwa Github, bezogen werden. Die Endung der Datei steht im übrigen für Zig Object Notation (ZON), eine Art Konfigurationssprache für Zig, die derzeit, genauso wie Zig selbst, noch nicht final ist.
+Die Datei _build.zig.zon_ enthält weitere Informationen über das Projekt, darunter dessen Namen, die Versionsnummer, sowie mögliche Dependencies. Dependencies können dabei lokal vorliegen und über einen relativen Pfad angegeben oder von einer Online-Quelle, wie etwa Github, bezogen werden. Die Endung der Datei steht im übrigen für Zig Object Notation (ZON), eine Art Konfigurationssprache für Zig, die derzeit, genauso wie Zig selbst, noch nicht final ist.
 
-Schauen wir in `src/main.zig`, so sehen wir das Zig für uns ein kleines Programm geschrieben hat.
+Schauen wir in _src/main.zig_, so sehen wir das Zig für uns ein kleines Programm geschrieben hat.
 
 ```zig
 const std = @import("std");
@@ -162,7 +162,7 @@ try bw.flush();
 
 Um sicher zu gehen, dass auch alle Daten aus dem `BufferedWriter` tatsächlich geschrieben wurden, muss schlussendlich `flush()` aufgerufen werden.
 
-Das von Zig vorbereitete "Hello, World"-Programm kann mit `zig build run`, von einem beliebigen Ordner innerhalb des Zig-Projekts, ausgeführt werden.
+Das von Zig vorbereitete "Hello, World"-Programm kann mit *`zig build run`*, von einem beliebigen Ordner innerhalb des Zig-Projekts, ausgeführt werden.
 
 ```bash
 $ zig build run
@@ -170,7 +170,7 @@ All your codebase are belong to us.
 Run `zig build test` to run the tests.
 ```
 
-Im gegebenen Beispiel wurden zwei Schritte ausgeführt. Zuerst wurde der Zig-Compiler aufgerufen um das Programm in `src/main.zig` zu kompilieren und im zweiten Schritt wurde das Programm ausgeführt. Zig platziert dabei seine Kompilierten Anwendungen in `zig-out/bin` und Bibliotheken in `zig-out/lib`.
+Im gegebenen Beispiel wurden zwei Schritte ausgeführt. Zuerst wurde der Zig-Compiler aufgerufen um das Programm in _src/main.zig_ zu kompilieren und im zweiten Schritt wurde das Programm ausgeführt. Zig platziert dabei seine Kompilierten Anwendungen in _zig-out/bin_ und Bibliotheken in _zig-out/lib_.
 
 == Funktionen
 
@@ -206,7 +206,7 @@ Innerhalb des Funktonskörpers werden mittels `if` verschiedene Bedingungen abge
 
 Mittels eines `return` Statements kann von einer Funktion in die aufrufende Funktion zurückgekehrt werden. Das Statement nimmt bei bedarf zusätzlich einen Wert der an die aufrufende Funktion zurückgegeben werden soll. Im obigen Beispiel gibt `gcd` mittels `return` den Wert des ausgeführten Bedingungsblocks zurück.
 
-Das vollständige Programm finden Sie im zugehörigen Github-Rerpository. Mittels `zig build-exe chapter01/gcd.zig` kann das Beispiel kompiliert werden.
+Das vollständige Programm finden Sie im zugehörigen Github-Rerpository. Mittels *`zig build-exe chapter01/gcd.zig`* kann das Beispiel kompiliert werden.
 
 == Unit Tests
 
@@ -226,7 +226,7 @@ $ zig test chapter01/gcd.zig
 All 1 tests passed.
 ```
 
-Innerhalb einer Datei sind Definitionen auf oberster Ebene (top-level definitions) unabhängig von ihrer Reihenfolge, was die Definition von Tests mit einschließt. Damit können Tests an einer beliebigen Stelle definiert werden, darunter direkt neben der zu testenden Funktion oder am Ende einer Datei. Der Zig-Test-Runner sammelt automatisch alle definierten Tests und führt dies beim Aufruf von `zig test` aus. Worauf Sie jedoch achten müssen ist, dass Sie ausgehend von der Wurzel-Datei, die konzeptionell den Eintritspunkt für den Compiler in ihr Programm oder Ihre Bibliothek darstellt, Zig mitteilen müssen in welchen Dateien zusätzlich nach Tests gesucht werden soll. Dies bewerkstelligen Sie, indem Sie die entsprechende Datei innerhalb eines Tests importieren.
+Innerhalb einer Datei sind Definitionen auf oberster Ebene (top-level definitions) unabhängig von ihrer Reihenfolge, was die Definition von Tests mit einschließt. Damit können Tests an einer beliebigen Stelle definiert werden, darunter direkt neben der zu testenden Funktion oder am Ende einer Datei. Der Zig-Test-Runner sammelt automatisch alle definierten Tests und führt dies beim Aufruf von *`zig test`* aus. Worauf Sie jedoch achten müssen ist, dass Sie ausgehend von der Wurzel-Datei, die konzeptionell den Eintritspunkt für den Compiler in ihr Programm oder Ihre Bibliothek darstellt, Zig mitteilen müssen in welchen Dateien zusätzlich nach Tests gesucht werden soll. Dies bewerkstelligen Sie, indem Sie die entsprechende Datei innerhalb eines Tests importieren.
 
 ```zig
 const foo = @import("foo.zig");
@@ -368,3 +368,7 @@ Reflexion kann in vielen Situationen äußerst nützlich sein, darunter der Impl
 == Parallelität
 
 == Cross Compilation
+
+Wie wir anfangs gesehen haben bietet `zig` nicht nur einen Compiler, sondern ein vollständiges Build-System. Die Beschreibung, wie ein Projekt gebaut werden soll, erfolgt dabei direkt in Zig und nicht in einer eigenen Sprache wie Sie es vielleicht von Make oder CMake gewohnt sind. Das besondere ist, dass `zig` nicht nur eine Build-System für die Sprache Zig bereitstellt, sondern auch als Build-System für C und C++ Projekte verwendet werden kann und damit u.a. eine Alternative zu Make und CMake darstellt. Dies unterstreicht die enge Beziehung zwischen Zig und C bzw. C++.
+
+
