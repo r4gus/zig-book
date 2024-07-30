@@ -36,9 +36,14 @@ Zig unterstützt Ganzzahlen mit einer beliebigen Bitbreite. Der Bezeichner eines
   [`i7`],
   [$-2^6$ bis $2^6 - 1$],
 
+  [`i32`],
+  [$-2^31$ bis $2^31 - 1$],
+
   [`u8`],
   [$0$ bis $2^8 - 1$],
 
+  [`u64`],
+  [$0$ bis $2^64 - 1$],
 )
 
 Vorzeichenbehaftete Ganzzahlen werden im Zweierkomplement dargestellt #footnote[https://en.wikipedia.org/wiki/Two's_complement]. In Assembler wird nicht zwischen vorzeichenbehafteten und vorzeichenunbehafteten Zahlen unterschieden. Alle mathematischen Operationen werden von der CPU auf Registern, mit einer festen Bitbreite (meist 64 Bit auf modernen Computern), ausgeführt. Dabei entspricht jede, vom Computer ausgeführte, arithmetische Operationen effektiv einem "Rechnen mit Rest", auch bekannt als modulare Arithmetik #footnote[https://de.wikipedia.org/wiki/Modulare_Arithmetik]. Die Bitbreite $m$ der Register (z.B. 64) repräsentiert dabei den Modulo $2^m$. Damit entspricht ein 64 Bit Register dem Restklassenring $ZZ_(2^64) = {0, 1, 2, ..., 2^64 - 1}$ und jegliche Addition zweier Register resultiert in einem Wert der ebenfalls in $ZZ_(2^64)$ liegt, d.h. auf _x86\_64_ wäre die Instruktion `add rax, rbx` äquivalent zu $"rax" = "rax" + "rbx" "mod" 2^64$. Diese Verhalten überträgt sich analog auf Ganzzahlen in Zig.
@@ -48,16 +53,93 @@ Das Zweierkomplement einer Zahl $a in ZZ_m$ ist das additive Inverse $a'$ dieser
 1. Gegeben eine Zahl in Binärdarstellung, invertiere jedes Bit, d.h. jede $1$ wird zu einer $0$ und umgekehrt.
 2. Addiere $1$ auf das Resultat und ignoriere mögliche Überläufe.
 
-Für das obige Beispiel mit der Zahl $4$ sieht dies wie folgt aus:
+Für das obige Beispiel mit der Zahl $4$ vom Typ `i8` sieht dies wie folgt aus:
 $
 00000100_2 &= 4_16 && "invertiere alle Bits der Zahl 4" \
 11111011_2 &= 251_16 && "addiere 1 auf die Zahl 251" \
 11111100_2 &= 252_16
 $
 
-#tip-box([
-    Zur Compile-Zeit bekannte Ganzzahlen haben kein Limit was ihre Größe (in Bezug auf die Bitbreite) angeht.
-])
+Zur Compile-Zeit bekannte Literale vom Typ `comptime_int` haben kein Limit was ihre Größe (in Bezug auf die Bitbreite) und konvertieren zu anderen Integertypen, solange das Literal im Wertebereich des Typen liegt.
+
+```zig
+// Variable `i` vom Typ `comptime_int`
+var i = 0;
+```
+
+Um die Variable zur Laufzeit modifizieren zu können, muss ihr eine expliziter Type mit fester Bitbreite zugewiesen werden. Dies kann auf zwei weisen erfolgen.
+
+1. Deklaration der Variable `i` mit explizitem Typ, z.B. `var i: usize = 0`.
+2. Verwendung der Funktion `@as()`, von welcher der Compiler den Type der Variable `i` ableiten kann, z.B. `var i = @as(usize, 0)`.
+
+Ein häufiger Fehler, der aber schnell behoben ist, ist die Verwendung einer Variable vom Typ `comptime_int` in einer Schleife.
+
+```zig
+var i = 0;
+while (i < 100) : (i += 1) {}
+```
+
+Was zu einem entsprechenden Fehler zur Compilezeit führt.
+
+```bash
+$ zig build-exe chapter02/integer.zig
+error: variable of type 'comptime_int' must be const or comptime
+    var i = 0;
+        ^
+note: to modify this variable at runtime, it must be given an explicit fixed-size number type
+```
+
+Der Zig-Compiler ist dabei hilfreich, indem er neben dem Fehler auch einen Lösungsansatz bietet. Nachdem der Variable `i` ein expliziter Typ zugewiesen wird (`var i: usize`) compiliert das Programm ohne weitere Fehler.
+
+Optional können die Prefixe `0x`, `0o` und `0b` an ein Literal angehängt werden um Literale in Hexadezimal, Octal oder Binär anzugeben, z.B. `0xcafebabe`.
+
+Um größere Zahlen besser lesbar zu machen, kann ein Literal mit Hilfe von Unterstrichen aufgeteilt werden, z.B. `0xcafe_babe`.
+
+Operatoren wie `+` (Addition), `-` (Subtraktion), `*` (Multiplikation) und `/` (Division) führen bei einem Überlauf zu undefiniertem Verhalten (engl. undefined behavior). Aus diesem Grund stellt Zig spezielle Versionen dieser Operatoren zur Verfügung, darunter:
+
+- Operatoren für Sättigungsarithmetik: Alle Operationen laufen in einem festen Intervall zwischen einem Minimum und einem Maximum ab welches nicht unter- bzw. überschritten werden kann.
+    - Addition (`+|`): `@as(u8, 255) +| 1 == @as(u8, 255)`
+    - Subtraktion (`-|`): `@as(u32, 0) -| 1 == 0`
+    - Multiplikation (`*|`): `@as(u8, 200) *| 2 == 255`
+- Wrapping-Arithmetik: Dies ist äquivalent zu modularer Arithmetik.
+    - Addition (`+%`): `@as(u32, 0xffffffff) +% 1 == 0`
+    - Subtraktion (`-%`): `@as(u8, 0) -% 1 == 255`
+    - Multiplikation (`*%`): `@as(u8, 200) *% 2 == 144` 
+    
+
+== Fließkommazahlen (Float)
+
+Im Gegensatz zu Integern erlaubt Zig keine beliebige Bitbreite für Fließkommazahlen. Zur Verfügung stehen:
+
+#table(
+  columns: (auto, auto),
+  inset: 10pt,
+  align: horizon,
+  table.header(
+    [*Typ*], [*Repräsentation*],
+  ),
+  [`f16`],
+  [IEEE-754-2008 binary16],
+
+  [`f32`],
+  [IEEE-754-2008 binary32],
+
+  [`f64`],
+  [IEEE-754-2008 binary64],
+
+  [`f80`],
+  [IEEE-754-2008 80-bit extended precision],
+
+  [`f128`],
+  [IEEE-754-2008 binary128],
+)
+
+Literale sind immer vom Typ `comptime_float`, welcher äquivalent zum größtmöglichen Fließkommatypen (`f128`) ist, und können zu jedem beliebigen Fließkommatypen konvertiert werden. Enthält ein Literal keinen Bruchteil, so ist eine Konvertierung zu einem Integertyp ebenfalls möglich.
+
+```zig
+const fp = 123.0E+77;
+const hfp = 0x103.70p-5;
+```
 
 == Container
 
