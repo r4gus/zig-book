@@ -52,7 +52,7 @@ _Italic_: Markiert neue Begriffe, URLs, Email-Adressen, Dateinamen und -endungen
 
 *`Konstanter Abstand Fett`*: Zeigt Kommandos oder andern, vom Nutzer zu tippenden, Text.
 
-#tip-box([Dieses Icon markiert einen Tipp bzw. einen Hinweis.])
+#tip-box([Ziggy markiert einen Tipp bzw. einen Hinweis.])
 
 #heading(outlined: false, "Code Beispiele")
 

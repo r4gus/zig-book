@@ -78,7 +78,7 @@ Bei der Verwendung von Programmiersprachen mit manuellem Speichermanagement ist 
 
 === Static Memory
 
-In Zig, wie auch in C, befinden sich Variablen und Konstanten, die im globalen Scope einer Anwendung deklariert werden, in der .data oder .bss Section eines Programms. Speicher für diese Sektionen wird beim Start eines Prozesses gemapped und er bleibt bis zur Terminierung des Prozesses valide. Variablen die dies betrifft haben eine statische Life-Time, d.h. sie sind vom Start eines Prozesses bis zu dessen Beendigung valide. Selbes gilt für statische, lokale Variablen.
+In Zig, wie auch in C, befinden sich statische Variablen und Konstanten, die im globalen Scope, bzw. im Fall von Zig in einem Container #footnote[Ein Container in Zig ist jedes Konstrukt, das als Namensraum (engl. namespace) dient. Dazu zählen u.a. Structs aber auch Sourcedateien.], einer Anwendung deklariert werden, in der .data oder .bss Section eines Programms. Speicher für diese Sektionen wird beim Start eines Prozesses gemapped und er bleibt bis zur Terminierung des Prozesses valide. Variablen die dies betrifft haben eine statische Lifetime, d.h. sie sind vom Start eines Prozesses bis zu dessen Beendigung valide. Selbes gilt für statische, lokale Variablen.
 
 ```zig
 const std = @import("std");
@@ -94,10 +94,10 @@ pub fn main() void {
 }
 ```
 
-Die Konstante `hello` wird global deklariert und ist damit statisch. Selbes gilt für die lokale Variable `x`. Im gegensatz zu C werden statische, lokalen Variablen nicht mit dem static Keyword deklariert sondern innerhalb eines lokalen Structs. Lokale, statische Variablen können nützlich sein um z.B. einen gemeinsamen "Shared-State" zwischen Aufrufen der selben Funktion zu verwirklichen.
+Die Konstante `hello` wird im umschließenden Container, dargestellt durch die Quelldatei, deklariert und ist damit zum einen statisch, zum anderen ist sie aufgrund des `const` Modifiers zur Compilezeit bekannt. Selbes gilt für die lokale, statische Variable `x`. Im gegensatz zu C werden statische, lokalen Variablen nicht mit dem static Keyword deklariert sondern innerhalb eines lokalen Structs welches ebenfalls einen Container darstellt. Lokale, statische Variablen können nützlich sein um z.B. einen gemeinsamen "Shared-State" zwischen Aufrufen der selben Funktion zu verwirklichen.
 
 #tip-box([
-    In Zig wird jede Translationunit, d.h. jede Datei in der Quellcode liegt, als Struct betrachtet. Dementsprechend gibt es eigentlich keine global deklarierten Variablen, sondern nur Variablen die in Structs deklariert werden.
+    In Zig wird jede Translationunit, d.h. jede Datei in der Quellcode liegt, als Struct und damit als Container betrachtet. Dementsprechend gibt es eigentlich keine global deklarierten Variablen wie man sie aus C kennt, sondern nur statische Variablen die in Containern deklariert werden.
 ])
 
 === Automatic Memory
