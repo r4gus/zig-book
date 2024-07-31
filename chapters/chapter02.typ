@@ -169,6 +169,112 @@ Diese Darstellung entspricht der Gleichung $(-1)^s * 1.f * 2^(e - 127)$. Der Bru
 
 Aufgrund der Darstellung von Fließkommazahlen kann sich die Ausführung bestimmter Operationen, wie ein Tests auf Gleichheit (`==`), als trickreich herausstellen. Ein Beispiel ist die wiederholte Addition der Fließkommazahl $0.1$. Die Summe $sum_(k=1)^10 0.1$ ist erwartungsgemäß $1.0$, je nach Präzision der Fließkommazahl gilt jedoch $sum_(k=1)^10 0.1 eq.not 1.0$. 
 
+== Arrays und Slices
+
+Zig besitzt eine Vielzahl an Datentypen um eine (lineare) Sequenz an Werten im Speicher darzustellen, darunter:
+
+- Der Typ `[N]T` repräsentiert ein Array vom Typ `T` bestehend aus `N` Werten. Die Größe eines Arrays ist zur Compilezeit bekannt und Arrays werden grundsätzlich auf dem Stack alloziert. Damit kann ein Array weder erweitert noch verkleinert werden.
+- Der Typ `[]T` bzw. `[]const T` repräsentiert ein Slice vom Typ `T`, bestehend aus einem Zeiger und einer Länge. Die Länge eines Slices ist zur Laufzeit bekannt. Slices referenzieren eine Sequenz von Werten. Dies kann z.B. ein Array sein oder auch eine auf dem Heap gespeicherte Sequenz. Die von einem konstanten Slice `[]const T` referenzierten Werte können gelesen, jedoch nicht verändert werden, während die Werte eines Slices `[]T` sowohl gelesen als auch verändert werden können.
+
+Sowohl Arrays als auch Slices erlauben den Zugriff auf deren Länge durch den Ausdruck `.len`.
+
+```zig
+// chapter02/slices.zig
+var a = [_]u8{ 1, 2, 3, 4 };
+std.log.info("length of a is {d}", .{a.len});
+const s = &a;
+std.log.info("length of a is still {d}", .{s.len});
+```
+
+Mit dem Address-Of Operator `&` kann ein Slice für ein Array erzeugt werden. Alternativ kann auch der Ausdruck `a[0..]` verwendet werden, der einen Bereich innerhalb des Arrays beschreibt. Grundsätzlich liegt das erste Element einer Sequenz immer an Index $0$ und es kann mit `a[0]` auf dieses zugegriffen werden. Das letzte Element liegt immer an der Stelle `a.len - 1` und es kann mit `a[a.len - 1]` darauf zugegriffen werden. Der Index muss dabei immer ein Integer vom Typ `usize` oder ein Literal sein, das zu diesem Typ konvertiert werden kann. Die Verwendung anderer Typen als Index führt zu einem Fehler zur Compilezeit.
+
+Auf den Zeiger eines Slices kann mit `.ptr` zugegriffen werden, z.B. `s.ptr`.
+
+Zig überprüft bei dem Zugriff auf eine Array oder Slice zur Laufzeit, dass der Index innerhalb des Speicherbereichs der Sequenz liegt. Ließt eine Anwendung über die Grenzen der Sequenz, so führt dies zu einem Fehler zur Laufzeit der den Prozess beendet. Dies verhindert typische Speicherfehler wie Buffer-Overflows and Buffer-Overreads die in Sprachen wie C weit verbreitet sind und in der Vergangenheit zu Hauf von Angreifern ausgenutzt wurden um Anwendungen zu exploiten.
+
+```zig
+// chapter02/slices.zig
+var i: usize = 0;
+while (true) : (i += 1) {
+    a[i] += 1;
+}
+```
+
+```bash
+$ zig build-exe slices.zig -Doptimize=ReleaseFast
+$ ./slices 
+info: length of a is 4
+info: length of a is still 4
+thread 1232 panic: index out of bounds: index 4, len 4
+slices.zig:14:10: 0x103544c in main (slices)
+        a[i] += 1;
+         ^
+start.zig:514:22: 0x1034c99 in posixCallMainAndExit (slices)
+            root.main();
+                     ^
+start.zig:266:5: 0x1034801 in _start (slices)
+    asm volatile (switch (native_arch) {
+    ^
+???:?:?: 0x0 in ??? (???)
+Aborted (core dumped)
+```
+
+=== Arrays
+
+Es gibt eine Vielzahl von Möglichkeiten um Arrays in Zig zu definieren. Die einfachste Möglichkeit ist, eine Sequenz von Werten in geschweiften Klammern anzugeben.
+
+```zig
+const prime: [5]u8 = .{2, 3, 5, 7, 11}; 
+const names = [3][]const u8{"David", "Franziska", "Sarah"};
+```
+
+Für den Fall, dass initial keine Werte bekannt sind kann ein Array mit `undefined` initialisiert werden. In diesem Fall ist der Inhalt des Speichers undefiniert.
+
+```zig
+const some: [1000]u8 = undefined;
+```
+
+Arrays können aber auch mit einem bestimmten Wert initialisiert werden. Im unteren Beispiel wird das gesamte Array mit `0` Werten initialisiert.
+
+```
+const some: [1000]u8 = .{0} ** 1000;
+```
+
+Die Länge eines Arrays muss immer zur Compilezeit bekannt sein. Dementsprechend können keine Variablen zur Angabe der Länge verwendet werden, außer die Variable ist vom Typ `comptime_int`. Sollte ein Array benötigt werden, dessen Länge nur zur Laufzeit bekannt ist, so muss der Speicher entweder manuell alloziert oder auf einen Kontainertypen wie `ArrayList` aus der Standardbibliothek zurückgegriffen werden #footnote[Mehr dazu in folgenden Kapiteln.].
+
+Viel Funktionen die über Sequenzen arbeiten erwarten ein Slice und kein Array. Zig konvertiert dabei nicht automatisch Arrays zu Slices, d.h. bei einem Aufruf muss explizit der Address-Of Operator `&` auf das Array angewandt werden oder alternativ ein Slice mit dem `[]` Operator festgelegt werden.
+
+```zig
+// chapter02/coersion.zig
+const std = @import("std");
+
+pub fn main() void {
+    const a: [5]u8 = .{ 1, 2, 3, 4, 5 };
+
+    foo(&a);
+    foo(a[1..]);
+}
+
+fn foo(s: []const u8) void {
+    for (s) |e| {
+        std.log.info("{d}", .{e});
+    }
+}
+```
+
+```bash
+$ ./coersion 
+info: 1
+info: 2
+info: 3
+info: 4
+info: 5
+info: 2
+info: 3
+info: 4
+info: 5
+```
+
 == Container
 
 Jedes syntaktische Konstruct in Zig welches als Namensraum dient und Variablen- oder Funktionsdeklaraionen umschließt wird als Container bezeichnet. Weiterhin können Container selbst Typdeklarationen sein, welche instantiiert werden können. Dazu zählen `struct`s, `enum`s, `union`s und sogar Sourcedateien.
