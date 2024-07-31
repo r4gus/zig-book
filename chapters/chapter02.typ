@@ -141,6 +141,34 @@ const fp = 123.0E+77;
 const hfp = 0x103.70p-5;
 ```
 
+Der Typ `f32` entspricht dem Typ `float` (single precision) in C, während `f64` dem Typ `double` (double precision) entspricht. Je nach Prozessortyp stehen dedizierte Maschineninstruktionen für zumindest einen Teil der Typen zur Verfügung, was eine effizientere Verwendung ermöglicht. Auf _x86\_64_ Prozessor stehen z.B. Instruktionen für single und double Precision zur Verfügung.
+
+Die interne Darstellung einer Fließkommazahl besteht für das Format _IEEE-754_ aus einem Vorzeichenbit, gefolgt von einem Exponenten und einem Bruch. Wie viele Bits jeweils für Exponent und Bruch zur Verfügung stehen ist abhängig von der Bitbreite der Fließkommazahl. Für _IEEE-754 binary32_ sieht dies wie folgt aus:
+
+#table(
+    columns: 7,
+    table.header(
+        [31], [30], [...], [23], [22], [...], [0]
+    ),
+    [*s*],
+        table.cell(colspan: 3, [exponent (e)]),
+        table.cell(colspan: 3, [fraction (f)]),
+)
+
+Diese Darstellung entspricht der Gleichung $(-1)^s * 1.f * 2^(e - 127)$. Der Bruch $f$ entspricht einer normalisierten, binär kodierten Fließkommazahl, d.h. die Zahl wird um eine entsprechende Anzahl an Stelle verschoben, sodass genau eine führende Eins vor dem Komma steht. Als Beispiel entspricht die Fließkommazahl $3.25$ in binär der Zahl $11.01$ oder anders ausgedrückt $11.01 * 2^0$. Um die Zahl zu normalisieren wird diese nun um eine Stelle nach rechts verschoben $1.101 * 2^1$. Die Zahl nach der führenden Eins ($101$) entspricht $f$ und der Exponent $e$ ist die Summe des Exponenten der normalisierten Darstellung und einem Bias (im Fall von `f32` ist dieser $127$), d.h. $e = 1 + 127 = 128_16 = 10000000_2$. Damit wird $3.25$ wie folgt kodiert:
+
+#table(
+    columns: 7,
+    table.header(
+        [31], [30], [...], [23], [22], [...], [0]
+    ),
+    [0],
+        table.cell(colspan: 3, [$10000000_2$]),
+        table.cell(colspan: 3, [$10100000000000000000000_2$]),
+)
+
+Aufgrund der Darstellung von Fließkommazahlen kann sich die Ausführung bestimmter Operationen, wie ein Tests auf Gleichheit (`==`), als trickreich herausstellen. Ein Beispiel ist die wiederholte Addition der Fließkommazahl $0.1$. Die Summe $sum_(k=1)^10 0.1$ ist erwartungsgemäß $1.0$, je nach Präzision der Fließkommazahl gilt jedoch $sum_(k=1)^10 0.1 eq.not 1.0$. 
+
 == Container
 
 Jedes syntaktische Konstruct in Zig welches als Namensraum dient und Variablen- oder Funktionsdeklaraionen umschließt wird als Container bezeichnet. Weiterhin können Container selbst Typdeklarationen sein, welche instantiiert werden können. Dazu zählen `struct`s, `enum`s, `union`s und sogar Sourcedateien.
