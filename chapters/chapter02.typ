@@ -1,4 +1,5 @@
 #import "../tip-box.typ": tip-box
+#import "@preview/fletcher:0.5.1" as fletcher: diagram, node, edge
 
 = Standard Typen
 
@@ -273,6 +274,83 @@ info: 2
 info: 3
 info: 4
 info: 5
+```
+
+=== Slices
+
+Slices `[]T` werden ohne Angabe einer Länge geschrieben und repräsentieren eine lineare Sequenz an Werten. Konzeptionell ist ein Slice eine Zeiger vom Typ `std.builtin.Type.Pointer`. Schaut man sich die Definition von `Slice` in _zig/src/mutable\_value.zig_ #footnote[https://github.com/ziglang/zig/blob/624fa8523a2c4158ddc9fce231181a9e8583a633/src/mutable_value.zig] an, so sieht man, dass ein Slice durch einen Zeiger (`ptr`) auf den Beginn des referenzierten Speicherbereichs und eine Länge (`len`) beschrieben wird.
+
+```zig
+// github.com/ziglang/zig/src/mutable_value.zig
+pub const Slice = struct {
+    ty: InternPool.Index, // wir ignorieren dieses Feld :)
+    /// Must have the appropriate many-ptr type.
+    ptr: *MutableValue,
+    /// Must be of type `usize`.
+    len: *MutableValue,
+};
+```
+
+Je nach Typ einer Variable bzw. eines Parameters konvertiert Zig die Referenz zu einem Struct automatisch in ein Slice.
+
+```zig
+const b: [3][]const u8 = .{ "David", "Franziska", "Sarah" };
+
+// Zig konvertiert die Referenz automatisch zu einem Slice.
+const sb: []const []const u8 = &b;
+_ = sb;
+
+// `rb` ist ein Pointer zu einem Array.
+const rb: *const [3][]const u8 = &b;
+_ = rb;
+```
+
+Da `b` eine Konstante ist, muss auch das Slice `sb` (`[]const T`), sowie der Pointer `rb` auf das Array (`*const [N]T`) konstant sein. Wäre `b` eine Variable, so wäre auch das `const`, in Bezug auf das Slice bzw. den Pointer, optional, je nachdem ob das Array durch die jeweilige Referenz verändert werden soll oder nicht.
+
+```
+               /----------------------\
+            b |                        |
+       -------v------------------------|----------------------
+stack |    | | | |                    | |3|                   |
+       -----|-|-|---------------------------------------------
+            |  \ \----------------      sb
+             \  |                 |
+              | -------|          |
+       -------v--------v----------v---------------------------
+data  |    |"David"|"Franziska"|"Sarah"|                      |
+       -------------------------------------------------------
+```
+
+Mithilfe des `[]` Operators können Slices für einen bestehenden Speicherbereich angegeben werden. Innerhalb der eckigen Klammern muss dafür ein Bereich spezifiziert werden, der durch das Slice eingegrenzt werden soll:
+
+- `[0..]` : Der gesamte Bereich, vom ersten bis zum letzten Element.
+- `[N..M]` : Ein Bereich beginnend ab Index `N` (eingeschlossen) und endend bei Index `M` (ausgeschlossen).
+
+```zig
+const name = "David";
+// Die ersten drei Buchstaben
+std.log.info("{s}", .{name[0..3]});
+// Die letzten zwei Buchstaben
+std.log.info("{s}", .{name[3..]});
+// Die mittleren drei Buchstaben
+std.log.info("{s}", .{name[1..4]});
+```
+
+Um Buffer-Overreads vorzubeugen überprüft Zig, dass die angegeben Indices valide sind. Sind die Indices zur Compilezeit bekannt, so führt ein invalider Index zu einem Compile-Fehler, andernfalls zu einer Panic zur Laufzeit.
+
+```zig
+// chapter02/slice_error.zig
+const a = "this won't work";
+// ...
+const n: usize = 20;
+std.log.info("{s}", .{a[1..n]});
+```
+
+Versucht man den obigen Code mit *`zig build-exe chapter02/slice_error.zig`* zu Compilieren so erhält man den folgenden Fehler:
+
+```bash
+error: end index 20 out of bounds for array of length 15 +1 (sentinel)
+    std.log.info("{s}", .{a[1..n]});
 ```
 
 == Container
