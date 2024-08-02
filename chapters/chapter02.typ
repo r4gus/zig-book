@@ -353,6 +353,56 @@ error: end index 20 out of bounds for array of length 15 +1 (sentinel)
     std.log.info("{s}", .{a[1..n]});
 ```
 
+== Zeiger (Pointer)
+
+Zig unterscheidet zwischen zwei Arten von Zeigern, _single-item_ und _many-item_ Pointer.
+
+Ein single-item Pointer `*T` zeigt auf exakt einen Wert im Speicher und kann mit der Syntax `ptr.*` dereferenziert werden. Mit Hilfe des Address-of-Operators `&` kann ein single-item Pointer bezogen werden.
+
+```zig
+// Definiere eine Variable vom Typ u8
+var v: u8 = 128;
+// Beziehe einen Zeiger auf `v`
+const v_ptr = &v;
+// Dereferenziere den Zeiger `v_ptr` und addiere 1 zu `v`
+v.* += 1;
+```
+
+Ein multi-item Pointer `[*]T` zeigt auf eine lineare Sequenz an Werten im Speicher mit unbekannter Länge. Der Zeiger eines Slice (`.ptr`) ist ein multi-item Pointer. Allgemein teilen Slices und multi-item Pointer die selbe Index- und Slice-Syntax.
+
+- `ptr[i]`
+- `ptr[start..end]`
+- `ptr[start..]`
+
+Genau wie C erlaubt auch Zig Zeigerarithmetik auf multi-item Pointer.
+
+```zig
+// chapter02/pointer.zig
+var array = [_]i32{ 1, 2, 3, 4 };
+
+var array_ptr = array[0..].ptr;
+
+std.log.info("{d}", .{array_ptr[0]});
+array_ptr += 1;
+std.log.info("{d}", .{array_ptr[0]});
+```
+
+Nach dem Compilieren mit *`zig build-exe chapter02/pointer.zig`* können wir die Beispiel Anwendung ausführen und sehen, dass die ersten beiden Zahlen von `array` ausgegeben werden, obwohl wir den selben Index für `array_ptr` verwenden. Grund dafür ist, dass wir den Zeiger selbst, zwischen dem ersten und zweiten Aufruf von `std.log.info()`, inkrementiert haben.
+
+```bash
+$ ./pointer 
+info: 1
+info: 2
+```
+
+Ein weit verbreitetes Konzept in C sind `NULL`-terminierte Strings, d.h. ein `0`-Byte wird hinter den letzten Character eines Strings geschrieben und markiert so dessen Ende. Zig bietet etwas sehr ähnliches, nämlich sentinel-terminated Pointer.
+
+Ein sentinel-terminated Pointer wird durch einen Typ `[*:x]T` beschrieben, wobei `x` ein Wert vom Typ `T` ist und den Sentinel darstellt, der das Ende einer Sequenz markiert. Analog zu einem `NULL`-terminierten String vom Typ `char*` in C, schreibt man in Zig `[*:0]u8`.
+
+#tip-box([
+    Im Allgemeinen werden in Zig Slices, gegenüber sentinel-terminated Pointern, präferiert. Der Grund hierfür ist, dass Slices über Bounds-Checking verfügen und so gängige Speicherfehler abgefangen werden können. Es gibt jedoch auch Situationen, in denen many-item Pointer bzw. sentinel-terminated Pointer explizit benötigt werden, z.B. beim Arbeiten mit C Code. Auf die Interoperabilität zwischen Zig und C wird in einem späteren Kapitel noch näher eingegangen.
+])
+
 == Container
 
 Jedes syntaktische Konstruct in Zig welches als Namensraum dient und Variablen- oder Funktionsdeklaraionen umschließt wird als Container bezeichnet. Weiterhin können Container selbst Typdeklarationen sein, welche instantiiert werden können. Dazu zählen `struct`s, `enum`s, `union`s und sogar Sourcedateien.
