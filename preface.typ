@@ -64,9 +64,9 @@ Zitierungen würden uns freuen, sind jedoch keinesfalls notwendig. Ein Zitat umf
 
 Sollten Sie Fehler im Buch oder Code finden, die nicht auf unterschiedliche Compiler-Versionen zurückzuführen sind können Sie uns mit einem Verbesserungsvorschlag kontaktieren.
 
-#heading(outlined: false, "Kontakt")
+#heading(outlined: false, "Fragen, Anmerkungen und Verbesserungen")
 
-Bei Fragen zu diesem Buch kontaktieren Sie bitte david (at) thesugar.de.
+Ich habe mein Bestes getan dieses Buch so informativ und technisch korrekt wie möglich zu gestalten. Ich bin mir jedoch auch sicher, dass dieses Buch besser sein könnte als es gerade ist. Sollten Sie Fehler finden oder generell Feedback zu diesem Buch geben wollen, so können Sie mich unter david\@thesugar.de kontaktieren. Dies gibt mir die Möglichkeit dieses Buch über die Zeit zu verbessern.
 
 #heading(outlined: false, "Danksagung")
 
