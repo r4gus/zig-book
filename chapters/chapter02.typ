@@ -405,40 +405,156 @@ Ein sentinel-terminated Pointer wird durch einen Typ `[*:x]T` beschrieben, wobei
 
 == Container
 
-Jedes syntaktische Konstruct in Zig welches als Namensraum dient und Variablen- oder Funktionsdeklaraionen umschließt wird als Container bezeichnet. Weiterhin können Container selbst Typdeklarationen sein, welche instantiiert werden können. Dazu zählen `struct`s, `enum`s, `union`s und sogar Sourcedateien.
+Jedes syntaktische Konstruct in Zig, welches als Namensraum dient und Variablen- oder Funktionsdeklaraionen umschließt, wird als Container bezeichnet. Weiterhin können Container selbst Typdeklarationen sein, welche instantiiert werden können. Dazu zählen `struct`s, `enum`s, `union`s und sogar Sourcedateien mit der Dateiendung _.zig_.
 
 Ein Merkmal welches Container von Blöcken unterscheidet ist, dass Container keine Ausdrücke enthalten, obwohl sowohl Container als auch Blöcke, mit der Ausnahme von Sourcedateien, in geschweifte Klammern (`{}`) gefasst werden.
 
 === Struct
 
-In Zig werden Structs mit dem `struct` Schlüsselwort deklariert. Der Inhalt eines Structs wird dabei in geschweifte Klammern gefasst. Neben Feldern können Structs auch Methoden, Konstanten und Variablen enthalten.
+Ein Struct erlaubt die Definition eines neuen Datentyp der eine Menge an Werten, von einem bestimmten Typ, zusammenfasst. Structs werden mit dem `struct` Schlüsselwort deklariert. Der Inhalt eines Structs wird dabei in geschweifte Klammern gefasst. Innerhalb der geschweiften Klammern wird jeder Wert, den ein Struct umschließt, durch einen Bezeichner bzw. Namen und einen Typen, getrennt durch ein `:`, deklariert. Diese Kombination aus Name und Typ wird als Feld (engl. field) bezeichnet. Nach jedem Feld folgt ein Komma (`,`), welches das Feld vom danach folgenden Feld trennt. Neben Feldern können Structs auch Methoden, Konstanten und Variablen enthalten.
 
 ```zig
+// chapter02/color.zig
+
+// Das Struct wird der Konstante `RgbColor` zugewiesen. 
 const RgbColor = struct {
+    // Felder mit Standardwert `0`
     r: u8 = 0,
     g: u8 = 0,
     b: u8 = 0, 
-
+    
+    // Constanten für die drei Grundfarben.
+    // Mit `@This()` kann auf den umschließenden Container
+    // zugegriffen werden.
     const RED = @This(){ .r = 255 };
     const GREEN = @This(){ .g = 255 };
     const BLUE = @This(){ .b = 255 };
-
-    pub fn add(self: *@This(), other: *@This()) @This() {
-        // TODO 
+    
+    // Eine Methode ist eine Funktion die direkt auf einem
+    // Objekt aufgerufen werden kann. Ihr erster Parameter
+    // ist ein Instanz oder Referenz auf eine Instanz des Typen.
+    pub fn add(self: @This(), other: @This()) @This() {
+        // ...
     }
 };
 ```
 
-Jedes Feld wird durch einen Bezeichner und einen Typ, getrennt durch einen Doppelpunkt `:`, angegeben. Weiterhin kann jedem Feld ein Default-Wert zugewiesen werden, der automatisch übernommen wird, sollte beim Instanziieren des Structs kein Wert für das Feld angegeben werden.
+Um ein Struct nach seiner Definition zu verwenden, muss dieses instanziiert werden, indem für jedes Feld ein konkreter Wert angegeben wird. Das Instanziieren erfolgt indem der Name des Struct, gefolgt von geschweiften Klammern, angegeben wird. Innerhalb der Geschweiften Klammern wird jedem Feld ein Wert zugewiesen. Alternativ kann, wie oben zu sehen ist, bei der Definition eines Structs jedem Feld ein Standardwert zugewiesen werden, der automatisch übernommen wird, sollte beim Instanziieren des Structs kein Wert für das Feld angegeben werden.
 
 ```zig
-const red = RgbColor{ .r = 255 };
+// Die Zuweisung der Felder muss nicht in der selben Reihenfolge
+// erfolgen, in der die Felder deklariert wurden.
+const red = RgbColor{ .r = 255, .b = 0, .g = 0 };
+// Angabe des Grün-Werts. Für die restlichen Felder wird der
+// Standardwert `0` übernommen.
+var green = RgbColor{ .g = 255 };
+// Zugriff auf die Konstante `BLUE` definiert in `RgbColor`
+const blue = RgbColor.BLUE;
 ```
 
 Mit Hilfe der Funktion `@This()` kann auf den umschließenden Kontext, im obigen beispiel das Struct, welches an `RgbColor` #footnote[Die gängige Konvention ist, dass Typbezeichner Camel-Case verwenden, d.h. ein zusammengeschriebenes Wort beginnend mit einem Großbuchstaben.] gebunden wird, zugegriffen werden.
 
 Konstanten innerhalb von Structs können dazu verwendet werden um Werte, wie etwa die Länge eines kryptografischen Schlüssels oder wie oben zu sehen, gängige Farben, die im Bezug zu dem gegeben Struct stehen im selben Scope zu deklarieren.
 
+Um auf ein bestimmtes Feld zuzugreifen wird Punktnotation verwendet. Um zum Beispiel auf den Rot-Wert der Konstante `red` zuzugreifen wird `red.r` verwendet. Auf die selbe Weise kann auch auf Methoden zugegriffen werden (z.B. `red.add(green)`). Im Fall von Variablen erfolgt eine (Neu-)Zuweisung von Feldern ebenfalls über die Punktnotation (z.B. `green.g = 128;`).
+
+```zig
+// Wir addieren die Werte zweier Farben.
+const new_color = red.add(green);
+```
+
+==== init Pattern
+
+Sobald Sie mit Feldern arbeiten, deren Werte dynamisch alloziert werden, stellt sich schnell die Frage wie und von wem der allozierte Speicher verwaltete werden soll. Verwalten kann dabei mehrere Dinge bedeuten:
+
+- Das initiale Allozieren von Speicher, für bestimmte Felder, beim instanziieren eines Structs.
+- Die Freigabe des Speichers, sobald das Struct nicht mehr benötigt wird.
+- Die Neuzuweisung eines Feldes vom Typ Single-Item-/Multi-Item-Pointer.
+
+Zwar können all diese Aufgaben dem Nutzer des entsprechenden Struct-Datentyps auferlegt werden #footnote[In den meisten Fällen sind das wohl Sie selbst.], je nach Anzahl der Zeiger-Felder kann dies jedoch extrem mühsam werden. Außerdem laufen Nutzer Gefahr, den Speicher nicht korrekt zu managen und so Speicherfehler, wie etwa Memory-Leaks bei denen Speicher nicht mehr freigegeben wird, in ihren Code einzubauen.
+
+Aus diesem Grund hat sich in Zig ein Konzept durchgesetzt, bei dem der dynamisch allozierte Speicher von einer Struct-Instanz selbst verwaltet wird. Structs die den Speicher ihrer Felder managen, verfügen meist über eine `init()` oder `new()` Funktion, die ein Objekt vom Typ `std.mem.Allocator` übergeben bekommt und das Struct initialisiert bzw. instanziiert, sowie eine `deinit()` Funktion, die den verwalteten Speicher wieder freigibt. Optional kann ein Struct über Setter-Funktionen für Felder verfügen, die vor der Neuzuweisung das alte Objekt deallozieren.
+
+```zig
+// chapter02/managed.zig
+const std = @import("std");
+
+const String = struct {
+    s: ?[]u8 = null,
+    allocator: std.mem.Allocator,
+
+    /// Erzeuge eine neue Instanz von `String` die den
+    /// Speicher des Strings mit Hilfe von `allocator` verwaltet.
+    pub fn init(allocator: std.mem.Allocator) @This() {
+        // Wir geben an dieser stelle ein anonymes Struct-Literal zurück, dessen
+        // Typ (`String`) vom Rückgabewert der Funktion abgeleitet wird.
+        return .{
+            // Der Standardwert für `s` ist null, daher müssen
+            // wir `s` nicht explizit initialisieren.
+            .allocator = allocator,
+        };
+    }
+
+    /// Deinitialisiere den referenzierten String.
+    pub fn deinit(self: *@This()) void {
+        // Da die Freigabe von Speicher immer erfolgreich sein muss,
+        // ist der Rückgabewert void, d.h. innerhalb der Funktion
+        // kann kein Fehler passieren.
+        if (self.s == null) return;
+        // Many-Item-Pointer werden mit `free` deinitialisiert.
+        self.allocator.free(self.s.?);
+        // Wir weisen an dieser Stelle `s` den `null`-Wert zu um klar
+        // zu machen, dass `s` kein valider Slice ist.
+        self.s = null;
+    }
+
+    /// Weise dem referenzierten `String` den Wert `str` zu.
+    /// Der Wert von `str` wird kopiert, d.h. der Caller behält
+    /// die Ownership über `str`.
+    ///
+    /// Ein Aufruf dieser Funktion kann fehlschlagen, z.B. weil
+    /// kein Speicher mehr zur Verfügung steht.
+    pub fn set(self: *@This(), str: []const u8) !void {
+        // Entweder `s` ist `null` oder es wurde bereits ein Wert gemanaged.
+        if (self.s) |s| {
+            // Wir reallozieren Speicher für `s`.
+            const s_ = try self.allocator.realloc(s, str.len);
+            @memcpy(s_, str);
+            self.s = s_;
+        } else {
+            // Wir kopieren `str`.
+            const s_ = try self.allocator.dupe(u8, str);
+            self.s = s_;
+        }
+    }
+
+    /// Beziehe den von `self` gemanageden String.
+    pub fn get(self: *const @This()) ?[]const u8 {
+        // An dieser Stelle geben wir entweder den Wert des Strings zurück oder,
+        // falls dieser nicht existiert, `null`.
+        return if (self.s) |s| s else null;
+    }
+};
+```
+
+Der Test für den obige Code kann mit *`zig test chapter02/managed.zig`* ausgeführt werden.
+
+```zig
+const allocator = std.testing.allocator;
+
+var s = String.init(allocator);
+// Sie können die untere Zeile auskommentieren um zu sehen, wie
+// Sie einen Memory-Leak provozieren.
+defer s.deinit();
+
+try s.set("Hello, World!");
+try std.testing.expectEqualStrings("Hello, World!", s.get().?);
+
+try s.set("Ich liebe Kryptografie");
+try std.testing.expectEqualStrings("Ich liebe Kryptografie", s.get().?);
+```
+
+Im obigen Test weisen wir die mit `init` erzeugte String-Instanz der Variable `s` zu. Direkt danach platzieren wir einen `defer` Ausdruck der dafür sorgt, dass `deinit` am Ende des Blocks aufgerufen wird. Wenn Sie wissen, dass sie ein Objekt im selben Block deinitialisiern wollen, sollten Sie sich grundsätzlich angewöhnen dies mit einem `defer`, direkt nach der Instanziierung des Objekts, zu machen. So vergessen Sie nicht, ihre Objekte auch wieder freizugeben.
 
 === Enum
 
