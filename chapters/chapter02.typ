@@ -463,6 +463,13 @@ Um auf ein bestimmtes Feld zuzugreifen wird Punktnotation verwendet. Um zum Beis
 const new_color = red.add(green);
 ```
 
+#tip-box([
+    In Zig sind alle Sturcts anonym. Ihr Name ist dementsprechend abhängig von ihrer Umgebung:
+    - Ist das Struct der initialisierende Ausdruck einer variable, so wird es nach der Variable benannt.
+    - Ist das Struct Teil eines `return` Ausdrucks, so wird es nach der Funktion benannt, von welcher es zurückgegeben wird.
+    - Andernfalls wird dem Struct ein Name nach dem Muster `filename.funcname.__struct_ID` zugewiesen.
+])
+
 ==== init Pattern
 
 Sobald Sie mit Feldern arbeiten, deren Werte dynamisch alloziert werden, stellt sich schnell die Frage wie und von wem der allozierte Speicher verwaltete werden soll. Verwalten kann dabei mehrere Dinge bedeuten:
@@ -555,6 +562,104 @@ try std.testing.expectEqualStrings("Ich liebe Kryptografie", s.get().?);
 ```
 
 Im obigen Test weisen wir die mit `init` erzeugte String-Instanz der Variable `s` zu. Direkt danach platzieren wir einen `defer` Ausdruck der dafür sorgt, dass `deinit` am Ende des Blocks aufgerufen wird. Wenn Sie wissen, dass sie ein Objekt im selben Block deinitialisiern wollen, sollten Sie sich grundsätzlich angewöhnen dies mit einem `defer`, direkt nach der Instanziierung des Objekts, zu machen. So vergessen Sie nicht, ihre Objekte auch wieder freizugeben.
+
+==== Anonyme Struct-Literale
+
+Zig erlaubt es den Struct-Typ eines Literals wegzulassen. In diesem Fall wird der Typ des Structs abgeleitet. Bei der Konvertierung zu einem anderen Typen, Instanziiert das Literal direkt die _Result-Location_.
+
+```zig
+const Point = struct { x: i32, y: i32 };
+const pt: Point = .{
+    .x = 16,
+    .y = 16,
+};
+```
+
+==== Result-Location
+
+Ein Konzept, das nicht nur Structs betrifft, auf welches ich an dieser Stelle trotzdem eingehen weil es die Instanziierung von Structs betrifft, ist das Konzept von _Result-Locations_.
+
+Bestimmten Ausdrücken in Zig wird eine sogenannte Result-Location zugewiesen, d.h. ein Zeiger auf einen Speicherbereich, in welchen das Ergebnis des Ausdrucks direkt geschrieben werden muss. Dies verhindert die Erzeugung von Kopien des Ergebnisses während der Initialisierung von Datenstrukturen. In vielen Fällen hat dies keine praktischen Auswirkungen. 
+
+Anders sieht es u.a. bei der Instanziierung von Structs aus. Angenommen der Ausdruck `.{ .a = x, .b = y }` hat die Result-Location `ptr`. In diesem Fall hätte der Ausdruck `x` die Result-Location `&ptr.a` und `y` die Result-Location `&ptr.b`. Ohne das Konzept von Result-Locations würde der Ausdruck ein temporäres Struct auf dem Stack anlegen, um dieses im Anschluss an die Zieladresse zu kopieren. Anders ausgedrückt, Zig zerlegt den Ausdruck `foo = .{ .a = x, .b = y }` in zwei gesonderte Ausdrücke `foo.a = x;` und `foo.b = y;`.
+
+Ein klassisches Beispiel bei dem dies Zum Verhängnis werden kann, ist beim Tauschen von Feldern eines Sturcts oder Arrays.
+
+```zig
+var arr: [2]u32 = .{ 1, 2 };
+arr = .{ arr[1], arr[0] };
+```
+
+Da keine temporären Wert für `arr[0]` und `arr[1]` gespeichert werden sieht der obige Ausdruck erst einem O.K. aus, führt jedoch zu einem unerwarteten Resultate, sollte man sich dem Konzept von Result-Location nicht bewusst sein. Die zweite Zeile ist nämlich äquivalent zu folgendem:
+
+```zig
+arr[0] = arr[1];
+arr[1] = arr[0];
+```
+
+Die Folgende Tabelle listet Ausdrücke, für die das Konzept von Result-Locations zutrifft.
+
+#table(
+  columns: (auto, auto, auto),
+  inset: 10pt,
+  align: horizon,
+  table.header(
+    [*Ausdruck*], [*Result Location*], [*Result Location für Teilausdruck*],
+  ),
+  [`const val: T = x`],
+  [keine],
+  [`x` hat die Result-Location `&val`],
+
+  [`var val: T = x`],
+  [keine],
+  [`x` hat die Result-Location `&val`],
+
+  [`val = x`],
+  [keine],
+  [`x` hat die Result-Location `&val`],
+
+  [`@as(T, x)`],
+  [ptr],
+  [keine],
+
+  [`&x`],
+  [ptr],
+  [keine],
+
+  [`f(x)`],
+  [ptr],
+  [keine],
+
+  [`.{x}`],
+  [ptr],
+  [`x` hat die Result-Location `&ptr[0]`],
+
+  [`.{ .a = x }`],
+  [ptr],
+  [`x` hat die Result-Location `&ptr.a`],
+
+  [`T{x}`],
+  [ptr],
+  [keine (Typinitialisierer propagieren keine Result-Locations!)],
+
+  [`T{ .a = x }`],
+  [ptr],
+  [keine (Typinitialisierer propagieren keine Result-Locations!)],
+
+  [`@Type(x)`],
+  [ptr],
+  [keine],
+
+  [`@typeInfo(x)`],
+  [ptr],
+  [keine],
+
+  [`x << y`],
+  [ptr],
+  [keine],
+)
+
+Wie aus der Tabelle zu entnehmen ist, macht es in Bezug auf Structs, sowie Arrays, einen Unterschied ob während der Initialisierung ein anonymes Struct-Literal `.{ .a = x }` angegeben wird oder nicht `T{ .a = x }`, da nur bei anonymen Struct-Literalen die Result-Location zu den Teilausdrücken propagiert.
 
 === Enum
 
