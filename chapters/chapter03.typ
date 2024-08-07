@@ -315,7 +315,7 @@ Speicherzugriffsfehler sind eine typische Fehlerquelle und haben in der Vergange
 
 ==== Buffer Overflow/ Over-Read
 
-Der Buffer-Overflow und Buffer-Over-Read sind nah miteinander verwandt, kommen jedoch jeweils mit ihren eigenen Problemen. Beim Buffer-Overflow wird Speicher außerhalb eines validen Objekts beschrieben. Dies ist meist das Resultat der unzureichenden Überprüfung der Grenzen eines Objekts, z.B. eines Arrays. Ein klassisches Beispiel ist ein Array, dass an einer Stelle indiziert wird die außerhalb der Grenzen des Arrays liegt.
+Der Buffer-Overflow und Buffer-Over-Read sind nah miteinander verwandt, kommen jedoch jeweils mit ihren eigenen Problemen. Beim Buffer-Overflow wird Speicher außerhalb eines validen Bereichs beschrieben. Dies ist meist das Resultat der unzureichenden Überprüfung der Grenzen eines Objekts, z.B. eines Arrays. Ein klassisches Beispiel ist ein Array, dass an einer Stelle indiziert wird die außerhalb der Grenzen des Arrays liegt.
 
 ```zig
 var x: [10]u8 = .{0} ** 10;
@@ -338,7 +338,7 @@ var x = try allocator.alloc(u8, 10);
 x[10] = 1;
 ```
 
-Da wir in Zig jedoch in den meisten Fällen mit Slices arbeiten und nicht mit rohen Zeigern wird der Buffer-Overflow zumindest zur Laufzeit erkannt und der Prozess beendet (Zig-Zen: "Runtime crashes are better than bugs").
+Da wir in Zig jedoch in den meisten Fällen mit Arrays oder Slices arbeiten und nicht mit rohen Zeigern und Zig für beide Datenstrukturen die Grenzen bei einem Speicherzugriff überprüft, wird der Buffer-Overflow zumindest zur Laufzeit erkannt und der Prozess beendet (Zig-Zen: "Runtime crashes are better than bugs").
 
 ```bash
 thread 7940 panic: index out of bounds: index 10, len 10
@@ -347,6 +347,18 @@ buffer-overflow.zig:12:6: 0x1037424 in main (buffer-overflow)
 ```
 
 ==== Invalid Page Fault
+
+Moderne Betriebssystem schirmen den Hauptspeicher ab und stellen jedem Prozess stattdessen virtuellen Speicher zur Verfügung, der aus Sicht des Prozesses nahezu unbegrenzt ist. Bei bedarf werden Teile des Hauptspeichers, sogenannte Pages, in den virtuellen Addressraum eines Prozesses gemapped, wodurch dieser den Speicher lesend, so wie schreibend, nutzen kann.
+
+Ein Invalid-Page-Fault ist eine Fehler bei dem ein Prozess versucht auf einen Speicherbereich zuzugreifen, der nicht durch eine Page gedeckt wird. Ein klassisches Beispiel hierfür ist die `NULL`-Pointer-Exception, bei dem innerhalb eines Programms versucht wird einen `NULL`-Zeiger zu dereferenzieren. Grund hierfür ist, dass die meisten Betriebssysteme keine physische Page auf den Speicherbereich mappen, der die Adresse `0x0000000000000000` mit einschließt. Wird eine Page-Fault durch das Betriebssystem erkannt, so erzeugt der Kernel einen Segmentation-Fault (Schutzverletzung) für den betroffenen Prozess, welcher diesen abnormal beendet. Jeder der schon einmal in C programmiert hat wird den entsprechenden Fehler `"sigsegv segmentation fault"` schon einmal auf der Kommandozeile gesehen haben.
+
+==== Use After Free
+
+Bei einem Use-After-Free wird Speicher, nach dem Ende dessen Lifetime, verwendet. Grundsätzlich hält Zig sie nicht davon ab, durch einen dangling Pointer, auf Speicher zuzugreifen, nachdem dieser wieder freigegeben wurde. Eine Möglichkeit das Risiko für Use-After-Free Bugs in Ihrem Code zu reduzieren, ist durch die Verwendung von optionalen Zeigern `?*T` bzw. `?*const T`.
+
+```zig
+
+```
 
 == Zusammenfassung
 

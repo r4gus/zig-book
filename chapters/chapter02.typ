@@ -353,6 +353,90 @@ error: end index 20 out of bounds for array of length 15 +1 (sentinel)
     std.log.info("{s}", .{a[1..n]});
 ```
 
+=== for-Schleife (Loop)
+
+Es kann äußerst nützlich sein über den Inhalt eines Arrays oder Slices zu iterieren. Eine Möglichkeit dies zu tun ist mit Hilfe einer for-Schleife.
+
+```zig
+// chapter02/loop.zig
+const names = [_][]const u8{ "David", "Franziska", "Sarah" };
+
+for (names) |name| {
+    std.log.info("{s}", .{name});
+}
+```
+
+Eine for-Schleife beginnt mit dem Schlüsselwort `for`, gefolgt von einer Sequenz, über die iteriert werden soll, in runden Klammern. Danach wird ein Bezeichner zwischen zwei `| |` angegeben. Dem Bezeichner wird für jede Iteration der aktuelle Wert zugewiesen, d.h. für das obige Beispiel wird im ersten Schleifendurchlauf `name` der Wert `"David"` zugewiesen, im zweiten Durchlauf `"Franziska"` und so weiter. Nachdem über alle Elemente iteriert wurde, wird automatisch aus der Schleife ausgebrochen.
+
+Eine Besonderheit von Zig ist, dass innerhalb einer for-Schleife simultan über mehrere Sequenzen iteriert werden kann.
+
+```zig
+for (names, 0..) |name, i| {
+    std.log.info("{s} ({d})", .{ name, i });
+}
+```
+
+Die Sequenzen werden, getrennt durch ein Komma, innerhalb der runden Klammer angegeben. Selbes gilt für die Bezeichner, an die die einzelnen Werte der Sequenzen gebunden werden. Im obigen Beispiel wird als zweite Sequenz `0..` angegeben, d.h. eine Sequenz von Ganzzahlen beginnend bei $0$. Zig sorgt dabei automatisch dafür, dass `names` und `0..` über die selbe Länge verfügen, indem das Ende von `0..` automatisch bestimmt wird, d.h. für das gegebene Beispiel ist `0..` äquivalent zu `0..3`.
+
+Sollten Sie über mehrere Arrays bzw. Slices gleichzeitig iterieren, so müssen sie sicherstellen, dass alle die selbe Länge besitzen!
+
+```zig
+const dishes = [_][]const u8{ "Apfelstrudel", "Pasta", "Quiche" };
+
+for (names, dishes) |name, dish| {
+    std.log.info("{s} likes {s}", .{ name, dish });
+}
+```
+
+Mit dem Schlüsselwort `break` kann aus einer umschließenden Schleife ausgebrochen werden, d.h. das Programm wird unter der Schleife fortgeführt.
+
+```zig
+for (1..5) |i| {
+    std.log.info("{d}", .{i});
+    if (i == 2) break;
+}
+```
+
+Mit dem Schlüsselwort `continue` können sie den restlichen Körper der Schleife überspringen und mit der nächsten Iteration beginnen. Sollten `continue` in der letzten Iteration der Schleife ausgeführt werden, so wird aus dieser ausgebrochen.
+
+```zig
+for (1..5) |i| {
+    if (i == 2) continue;
+    std.log.info("{d}", .{i});
+}
+```
+
+Schleifen können auch geschachtelt werden. Wenn Sie innerhalb einer der inneren Schleifen, aus einer der Äußeren ausbrechen wollen, müssen Sie sogenannte Label verwenden, mit der sie einer bestimmten Schleife einen Namen geben können. Labels kommen vor dem `for` Schlüsselwort und enden immer mit einem `:`. Sie können sowohl mit `break` als auch `continue` verwendet werden.
+
+```zig
+outer: for (names) |name| {
+    for (dishes) |dish| {
+        std.log.info("({s}, {s})", .{ name, dish });
+        // Da wir an dieser stelle aus der äußeren Schleife ausbrechen
+        // ist nur eine Ausgabe auf der Kommandozeile zu sehen.
+        break :outer;
+    }
+}
+```
+
+Zig erlaubt auch die Verwendung von for-Loops in Ausdrücken.
+
+```zig
+const pname = outer: for (names) |name| {
+    if (name.len > 0 and (name[0] == 'p' or name[0] == 'P'))
+        break :outer name;
+} else blk: {
+    break :blk "no name starts with p!";
+};
+std.log.info("found: {s}", .{pname});
+```
+
+In diesem Beispiel suchen wir nach einem Namen der mit dem Buchstaben P bzw. p beginnt. Sollte aus der Schleife mit `break` ausgebrochen werden, so wird der `else` Block nicht ausgeführt. Da `names` keinen solchen Namen beinhaltet wird der `else` Block aufgerufen und der String `"no name starts with p!"` der Konstanten `pname` zugewiesen. 
+
+Neben Schleifen können auch `if`/`else` Blöcken Label zugewiesen werden. Dies erlaubt es, mittels `break`, Werte aus dem Block heraus zu reichen, wie oben zu sehen ist.
+
+Sie können das Beispiel mit *`zig build-exe chapter02/loop.zig && ./loop`* compilieren und ausführen.
+
 == Zeiger (Pointer)
 
 Zig unterscheidet zwischen zwei Arten von Zeigern, _single-item_ und _many-item_ Pointer.
@@ -409,9 +493,13 @@ Jedes syntaktische Konstruct in Zig, welches als Namensraum dient und Variablen-
 
 Ein Merkmal welches Container von Blöcken unterscheidet ist, dass Container keine Ausdrücke enthalten, obwohl sowohl Container als auch Blöcke, mit der Ausnahme von Sourcedateien, in geschweifte Klammern (`{}`) gefasst werden.
 
+#tip-box([
+    In Zig ist die Definition von Structs, Enums und Unions ein Ausdruck, d.h. Definitionen müssen mit einem Semikolon `;` abgeschlossen werden (z.B. `struct {};`).
+])
+
 === Struct
 
-Ein Struct erlaubt die Definition eines neuen Datentyp der eine Menge an Werten, von einem bestimmten Typ, zusammenfasst. Structs werden mit dem `struct` Schlüsselwort deklariert. Der Inhalt eines Structs wird dabei in geschweifte Klammern gefasst. Innerhalb der geschweiften Klammern wird jeder Wert, den ein Struct umschließt, durch einen Bezeichner bzw. Namen und einen Typen, getrennt durch ein `:`, deklariert. Diese Kombination aus Name und Typ wird als Feld (engl. field) bezeichnet. Nach jedem Feld folgt ein Komma (`,`), welches das Feld vom danach folgenden Feld trennt. Neben Feldern können Structs auch Methoden, Konstanten und Variablen enthalten.
+Ein Struct erlaubt die Definition eines neuen Datentyp der eine Menge an Werten, von einem bestimmten Typ, zusammenfasst. Structs werden mit dem `struct` Schlüsselwort deklariert. Der Inhalt eines Structs wird dabei in geschweifte Klammern gefasst. Innerhalb der geschweiften Klammern wird jeder Wert, den ein Struct umschließt, durch einen Bezeichner bzw. Namen und einen Typen, getrennt durch ein `:`, deklariert. Diese Kombination aus Name und Typ wird als Feld (engl. field) bezeichnet. Nach jedem Feld folgt ein Komma (`,`), welches das Feld vom danach folgenden Feld trennt. Neben Feldern können Structs auch Methoden, Funktionen, Konstanten und Variablen enthalten.
 
 ```zig
 // chapter02/color.zig
@@ -439,6 +527,12 @@ const RgbColor = struct {
 };
 ```
 
+Mit Hilfe der Funktion `@This()` kann auf den umschließenden Kontext, im obigen beispiel das Struct, welches an `RgbColor` #footnote[Die gängige Konvention ist, dass Typbezeichner Camel-Case verwenden, d.h. ein zusammengeschriebenes Wort beginnend mit einem Großbuchstaben.] gebunden wird, zugegriffen werden.
+
+Funktionen im allgemeinen Sinn, die innerhalb eines Structs definiert sind, werden in Methoden und (Struct-)Funktionen unterteilt. Der Unterschied zwischen beiden ist dabei subtil. Der erste Parameter einer Methode besitzt als Typ immer das Struct selbst, z.B. `@This()`, `*@This()` oder `*const @This()`. Alternativ zu `@This()` kann auch direkt der Name verwendet werden, z.B. `pub fn getRed(self: *const RgbColor) u8 { ... }`. Methoden können direkt auf einer Instanz aufgerufen werden. Funktionen auf der anderen Seite haben als ersten Parameter nicht den Typ des Structs und werden über den Namen der Funktion aufgerufen, z.B. `RgbColor.foo()`.
+
+Konstanten innerhalb von Structs können dazu verwendet werden um Werte, wie etwa die Länge eines kryptografischen Schlüssels oder wie oben zu sehen, gängige Farben, die im Bezug zu dem gegeben Struct stehen im selben Scope zu deklarieren.
+
 Um ein Struct nach seiner Definition zu verwenden, muss dieses instanziiert werden, indem für jedes Feld ein konkreter Wert angegeben wird. Das Instanziieren erfolgt indem der Name des Struct, gefolgt von geschweiften Klammern, angegeben wird. Innerhalb der Geschweiften Klammern wird jedem Feld ein Wert zugewiesen. Alternativ kann, wie oben zu sehen ist, bei der Definition eines Structs jedem Feld ein Standardwert zugewiesen werden, der automatisch übernommen wird, sollte beim Instanziieren des Structs kein Wert für das Feld angegeben werden.
 
 ```zig
@@ -451,10 +545,6 @@ var green = RgbColor{ .g = 255 };
 // Zugriff auf die Konstante `BLUE` definiert in `RgbColor`
 const blue = RgbColor.BLUE;
 ```
-
-Mit Hilfe der Funktion `@This()` kann auf den umschließenden Kontext, im obigen beispiel das Struct, welches an `RgbColor` #footnote[Die gängige Konvention ist, dass Typbezeichner Camel-Case verwenden, d.h. ein zusammengeschriebenes Wort beginnend mit einem Großbuchstaben.] gebunden wird, zugegriffen werden.
-
-Konstanten innerhalb von Structs können dazu verwendet werden um Werte, wie etwa die Länge eines kryptografischen Schlüssels oder wie oben zu sehen, gängige Farben, die im Bezug zu dem gegeben Struct stehen im selben Scope zu deklarieren.
 
 Um auf ein bestimmtes Feld zuzugreifen wird Punktnotation verwendet. Um zum Beispiel auf den Rot-Wert der Konstante `red` zuzugreifen wird `red.r` verwendet. Auf die selbe Weise kann auch auf Methoden zugegriffen werden (z.B. `red.add(green)`). Im Fall von Variablen erfolgt eine (Neu-)Zuweisung von Feldern ebenfalls über die Punktnotation (z.B. `green.g = 128;`).
 
@@ -561,7 +651,15 @@ try s.set("Ich liebe Kryptografie");
 try std.testing.expectEqualStrings("Ich liebe Kryptografie", s.get().?);
 ```
 
-Im obigen Test weisen wir die mit `init` erzeugte String-Instanz der Variable `s` zu. Direkt danach platzieren wir einen `defer` Ausdruck der dafür sorgt, dass `deinit` am Ende des Blocks aufgerufen wird. Wenn Sie wissen, dass sie ein Objekt im selben Block deinitialisiern wollen, sollten Sie sich grundsätzlich angewöhnen dies mit einem `defer`, direkt nach der Instanziierung des Objekts, zu machen. So vergessen Sie nicht, ihre Objekte auch wieder freizugeben.
+Innerhalb des Tests weisen wir die mit `init` erzeugte String-Instanz der Variable `s` zu. Direkt danach platzieren wir einen `defer` Ausdruck der dafür sorgt, dass `deinit` am Ende des Blocks aufgerufen wird. 
+
+#tip-box([
+    Wenn Sie wissen, dass sie ein Objekt im selben Block deinitialisiern wollen, sollten Sie sich grundsätzlich angewöhnen dies mit einem `defer`, direkt nach der Instanziierung des Objekts, zu machen. So vergessen Sie nicht, ihre Objekte auch wieder freizugeben.
+])
+
+Danach weisen wir `s` mittels der Setter-Funktion `set()` den String `"Hello, World!"` zu und überprüfen im Anschluss mit `expectEqualStrings()`, unter Verwendung des Getters `get()`, ob der String auch korrekt zugewiesen wurde. Dies wiederholen wir mit einem zweiten String `"Ich liebe Kryptografie"` um zu überprüfen, dass die Deallokation des alten, von `s` gemanagten, Strings statt findet, bevor der neue String zugewiesen wird. 
+
+Eine Besonderheit des `std.testing.allocator` ist, dass beim ausführen eines Tests, nicht freigegebener Speicher automatisch, als Fehler, an den Aufrufer kommuniziert wird. Dadurch testen wir nicht nur das `set()` den gemanagten String neu zuweist, sonder auch den alten String freigibt.
 
 ==== Anonyme Struct-Literale
 
@@ -581,7 +679,7 @@ Ein Konzept, das nicht nur Structs betrifft, auf welches ich an dieser Stelle tr
 
 Bestimmten Ausdrücken in Zig wird eine sogenannte Result-Location zugewiesen, d.h. ein Zeiger auf einen Speicherbereich, in welchen das Ergebnis des Ausdrucks direkt geschrieben werden muss. Dies verhindert die Erzeugung von Kopien des Ergebnisses während der Initialisierung von Datenstrukturen. In vielen Fällen hat dies keine praktischen Auswirkungen. 
 
-Anders sieht es u.a. bei der Instanziierung von Structs aus. Angenommen der Ausdruck `.{ .a = x, .b = y }` hat die Result-Location `ptr`. In diesem Fall hätte der Ausdruck `x` die Result-Location `&ptr.a` und `y` die Result-Location `&ptr.b`. Ohne das Konzept von Result-Locations würde der Ausdruck ein temporäres Struct auf dem Stack anlegen, um dieses im Anschluss an die Zieladresse zu kopieren. Anders ausgedrückt, Zig zerlegt den Ausdruck `foo = .{ .a = x, .b = y }` in zwei gesonderte Ausdrücke `foo.a = x;` und `foo.b = y;`.
+Anders sieht es u.a. bei der Instanziierung von Structs mithilfe eines Literals aus. Angenommen der Ausdruck `.{ .a = x, .b = y }` hat die Result-Location `ptr`. In diesem Fall hätte der Ausdruck `x` die Result-Location `&ptr.a` und `y` die Result-Location `&ptr.b`. Ohne das Konzept von Result-Locations würde der Ausdruck ein temporäres Struct auf dem Stack anlegen, um dieses im Anschluss an die Zieladresse zu kopieren. Anders ausgedrückt, Zig zerlegt den Ausdruck `foo = .{ .a = x, .b = y }` in zwei gesonderte Ausdrücke `foo.a = x;` und `foo.b = y;`.
 
 Ein klassisches Beispiel bei dem dies Zum Verhängnis werden kann, ist beim Tauschen von Feldern eines Sturcts oder Arrays.
 
@@ -596,6 +694,8 @@ Da keine temporären Wert für `arr[0]` und `arr[1]` gespeichert werden sieht de
 arr[0] = arr[1];
 arr[1] = arr[0];
 ```
+
+Zuerst wird das erste Element von `arr` mit dem Wert `2` überschrieben, welcher sich an Index `1` befindet. Danach wird das zweite Element mit dem Wert des Ersten überschrieben. Schlussendlich ist der Inhalt von Array äquivalent zu `.{ 2, 2}`.
 
 Die Folgende Tabelle listet Ausdrücke, für die das Konzept von Result-Locations zutrifft.
 
@@ -660,6 +760,23 @@ Die Folgende Tabelle listet Ausdrücke, für die das Konzept von Result-Location
 )
 
 Wie aus der Tabelle zu entnehmen ist, macht es in Bezug auf Structs, sowie Arrays, einen Unterschied ob während der Initialisierung ein anonymes Struct-Literal `.{ .a = x }` angegeben wird oder nicht `T{ .a = x }`, da nur bei anonymen Struct-Literalen die Result-Location zu den Teilausdrücken propagiert.
+
+==== Tuples
+
+Anonyme Struct-Literale ohne Feldnamen werden als _Tupel_ bezeichnet. Die Felder eines Tupel werden automatisch durchnummeriert, wobei dem ersten Feld der Index $0$ zugewiesen wird, dem zweiten Feld der Index $1$ und so weiter.
+
+```zig
+const v = .{
+    @as(u16, 0xcafe),
+    "dave",
+    true,
+};
+```
+
+Es gibt zwei Möglichkeiten auf die Felder eines Tupel zuzugreifen:
+
+1. Mithilfe der Dot-Notation `.`, wobei der Feldname in eine `@""` gefasst werden muss #footnote[Namen innerhalb von `@""` können immer als Identifier verwendet werden, was Zahlen und Strings mit Leerzeichen einschließt!], z.B. `v.@"1"`.
+2. Alternativ kann auch ein Index in `[]` angegeben werden (z.B. `v[1]`), wobei der Index zu Compilezeit bekannt sein muss.
 
 === Enum
 
