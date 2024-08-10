@@ -2,7 +2,7 @@
 
 Zig ist eine Sprache geeignet für die Systemprogrammierung.
 
-Das alleine macht Zig nicht besonders, jedoch verheiratet Zig die Simplizität von C mit vielen modernen Features, was vor allem Neulingen, die eine systemnahe Programmiersprache lernen wollen, zugute kommt #footnote[Fun-Fact: Die gesamte Sprache kommt mit weniger als 50 Schlüsselwörtern aus.]. 
+Das alleine macht Zig nicht besonders, jedoch verheiratet Zig die Simplizität von C mit vielen modernen Features, was vor allem Neulingen, die eine systemnahe Programmiersprache lernen wollen, zugute kommt. Fun-Fact: Die gesamte Sprache kommt mit weniger als 50 Schlüsselwörtern aus.
 
 Zig als Systemprogrammiersprache ist unter anderem geeignet für:
 
@@ -20,6 +20,7 @@ Insbesondere Startups, aber auch große Unternehmen, haben in den letzten Jahren
 
 In der Welt der Systemprogrammiersprachen reiht sich Zig neben C ein und verzichtet auf viele Konzepte die andere Programmiersprachen überkomplex machen, darunter Vererbung. Damit ist Zig erfrischend übersichtlich, was vor allem Einsteigern zu gute kommt, bietet jedoch auch viele Verbesserungen gegenüber C. Ein wichtiger Fokus liegt auf der Lesbarkeit des Codes, d.h. was man sieht wird vom Computer später auch tatsächlich so ausgeführt (mit Abstrichen natürlich). Insbesondere bedeutet das: keine versteckten Allokationen, bei denen die Sprache ohne Zutun des Entwicklers dynamisch Speicher alloziert. Alles was mit der Allokation von dynamischem Speicher zu tun hat ist in Zig explizit!
 
+Fun-Fact: Während der StackOverflow 2024 Developer Survey #footnote[https://survey.stackoverflow.co/2024/] gaben $6.2%$ der Befragten an "umfangreiche Entwicklungsarbeiten" in Zig getätigt zu haben und $73.8%$ wollen die Sprache im kommenden Jahr (2025) nutzen. Damit ist Zig trotz seines Alpha-Status eine gern genutzte Programmiersprache und reiht sich von der Zahl der Anwender neben Sprachen wie Swift, Dart, Elixir und Ruby ein.
 
 #heading(outlined: false, "Zielgruppe")
 
