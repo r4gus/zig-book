@@ -780,5 +780,84 @@ Es gibt zwei Möglichkeiten auf die Felder eines Tupel zuzugreifen:
 
 === Enum
 
+Ein weiterer Typ der in keiner Programmiersprache fehlen darf sind Enums. Enums erlauben die Definition einer Menge an Werten, die intern durch einen numerischen Wert gedeckt sind.
+
+```zig
+const IPType = enum {
+    IPv4,
+    IPv6,
+};
+```
+
+Anders ausgedrückt, Enums erlauben es einer Menge an Zahlen einen Namen zuzuordnen, die in einem bestimmten Kontext Sinn ergeben.
+
+Um einer Variable einen Enum-Wert zuzuweisen kann Punktnotation verwendet werden.
+
+```zig
+const ipv4 = IPType.IPv4;
+```
+
+Normalerweise wird der, zu jedem Enum-Wert gehörende, numerische Wert, sowie dessen Typ, von Zig festgelegt. Sollte ein bestimmter Zahlentyp benötigt werden, kann dieser in runden Klammern, hinter dem `enum` Schlüsselwort, angegeben werden.
+
+```zig
+// Ein Enum gedeckt durch ein `u8`
+const IPType = enum(u8) {
+    IPv4,
+    IPv6,
+};
+```
+
+Weiterhin kann jedem Enum-Wert explizit ein numerischer Typ zugewiesen werden.
+
+```zig
+const IPType = enum(u8) {
+    IPv4 = 4,
+    IPv6 = 6,
+};
+```
+
+Dabei muss nicht jedem Wert explizit ein numerischer Wert zugewiesen werden. Für nicht zugewiesene Werte legt Zig automatisch einen numerischen Wert fest.
+
+Genau wie Stucts können auch Enums Methoden enthalten. Dabei gelten die selben Regeln, d.h. der erste Parameter muss den Typ des umschließenden (e.g. `IPType`) enthalten.
+
+```zig
+const IPType = enum(u8) {
+    IPv4 = 4,
+    IPv6 = 6,
+
+    pub fn isIPv4(self: @This()) bool {
+        // Der Typ muss nicht immer explizit angegeben werden. In diesem Beispiel
+        // reicht es einen Punkt (`.`) gefolgt vom Namen des Enum-Werts anzugeben.
+        // Dies wird als Enum-Literal bezeichnet.
+        return self == .IPv4;
+    }
+};
+```
+
+Enums können in `switch` Statements verwendet werden. Wie auch bei anderen Typen muss dabei darauf geachtet werden, dass alle Fälle abgedeckt werden oder alternativ ein `else` Zweig verwendet wird.
+
+```zig
+const ip = IPType.IPv4;
+const desc = switch (ip) {
+    IPType.IPv4 => "a IPv4 address",
+    IPType.IPv6 => "a IPv6 address",
+};
+std.log.info("{s}", .{desc});
+```
+
+Mit `@intFromEnum` kann ein Enum-Wert in seine numerische Repräsentation umgewandelt werden. Diese Operation kann nicht fehlschlagen, da jeder Enum-Wert von einer Zahl gedeckt wird.
+
+```zig
+std.debug.assert(@intFromEnum(IPType.IPv4) == 4);
+```
+
+Die Inverse Funktion zu `@intFromEnum` ist `@enumFromInt`. Mit ihr kann ein Integer in einen Enum-Wert umgewandelt werden. Da nicht jede Zahl mit einem Enum-Wert in Beziehung stehen muss kann diese Operation fehlschlagen.
+
+```zig
+std.debug.assert(@as(IPType, @enumFromInt(4)) == IPType.IPv4);
+```
+
+Enums haben einen besonderen Bezug zu Unions, welche wir uns als nächstes genauer anschauen werden.
+
 === Union
 
