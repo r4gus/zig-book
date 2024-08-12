@@ -861,3 +861,60 @@ Enums haben einen besonderen Bezug zu Unions, welche wir uns als nächstes genau
 
 === Union
 
+Unions sind nutzerdefinierte Typen die in sich mehrere verschiedene Typen vereinen können. Die verschiedenen Typen, die ein Union in sich vereint, werden als Liste an Feldern definiert. Zu einem bestimmten Zeitpunkt kann für eine Instanz immer nur ein Feld aktiv sein.
+
+```zig
+const IPAddr = union {
+    IPv4: [4]u8,
+    IPv6: [8]u16,
+};
+
+// Die Variable `ipv4` bindet einen Wert vom Typ `IPAddr` wobei
+// das Feld `IPv4` des Unions aktiv ist.
+const ipv4 = IPAddr{ .IPv4 = .{127, 0, 0, 1} };
+```
+
+Der Speicher, den ein Union benötigt, ist abhängig von dem Union-Feld mit dem größten Speicherbedarf. Im obigen Beispiel benötigt das `IPv4`-Feld $4 * 8 "Bit" = 32 "Bit" = 4 "Byte"$ und das `IPv6`-Feld benötigt $8 * 16 "Bit" = 128 "Bit" = 16 "Byte"$. Demnach benötigt jede Instanz von `IPAddr` immer 16 Byte an Speicher, unabhängig davon welches Feld aktiv ist.
+
+Um Unions in `switch`-Statements verwenden zu können, müssen sogenannte Tagged-Unions verwendet werden. Diese können definiert werden, indem nach dem `union` Schlüsselwort, in runden Klammern, ein Enum angegeben wird, dessen Felder sich mit den Feldern des Unions überschneiden.
+
+```zig
+const IPAddr = union(IPType) {
+    IPv4: [4]u8,
+    IPv6: [8]u16,
+};
+
+const ipv4 = IPAddr{ .IPv4 = .{127, 0, 0, 1} };
+
+switch (ipv4) {
+    .IPv4 => |v| std.log.info("{d}.{d}.{d}.{d}", .{v[0], v[1], v[2], v[3]}),
+    .IPv6 => |_| std.log.info("a IPv6 address", .{});
+}
+```
+
+Innerhalb eines `switch`-Statements kann nach dem `=>` eine Variable innerhalb von `| |` angegeben werden, an welche der Wert der Union-Instanz gebunden werden soll. Wird der Wert nicht benötigt, so kann anstelle einer Variable auch ein `_` angegeben werden.
+
+Soll der Wert eines Unions innerhalb eines `switch`-Statements modifiziert werden, so muss der Variable, an welche der Wert des Unions gebunden werden soll, ein `*` vorangestellt werden.
+
+```zig
+switch (ipv4) {
+    .IPv4 => |*v| v.* = .{ 192, 168, 13, 128 },
+    .IPv6 => {}; // Eine weitere Möglichkeit diesen Zweig zu ignorieren
+}
+```
+
+Weiterhin können Unions, genau wie Structs und Enums, über Methoden verfügen.
+
+```zig
+const IPAddr = union(IPType) {
+    IPv4: [4]u8,
+    IPv6: [8]u16,
+
+    pub fn isIPv4(self: @This()) bool {
+        return switch (self) {
+            .IPv4 => true,
+            else => false,
+        };
+    }
+};
+```
