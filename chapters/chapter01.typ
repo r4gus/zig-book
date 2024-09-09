@@ -8,7 +8,7 @@ In diesem Kapitel schauen wir uns einige kleine Zig Programme an, damit Sie ein 
 
 Um Zig zu installieren besuchen Sie die Seite #link("https://ziglang.org") und folgen den Instruktionen unter "GET STARTED" #footnote[https://ziglang.org/learn/getting-started/].
 
-Die Installation ist unter allen Betriebssystemen relativ einfach durchzuführen. In der Download Sektion #footnote[https://ziglang.org/download/] finden Sie vorkompilierte Zig-Compiler für die gängigsten Betriebssysteme, darunter Linux, macOS und Windows, sowie Architekturen. 
+Die Installation ist unter allen Betriebssystemen relativ einfach durchzuführen. In der Download Sektion #footnote[https://ziglang.org/download/] finden Sie vorkompilierte Zig-Compiler für die gängigsten Betriebssysteme, darunter Linux, macOS und Windows. 
 
 Unter Linux können Sie mit dem Befehl *`uname -a`* Ihre Architektur bestimmen. In meinem Fall ist dies `X86_64`.
 
@@ -41,7 +41,7 @@ doc  lib  LICENSE  README.md  zig
 
 - *doc*: Die Referenzdokumentation der Sprache. Diese ist auch online, unter #link("https://ziglang.org/documentation/0.13.0/"), zu finden und enthält einen Überblick über die gesamte Sprache. Ich empfehle Ihnen ergänzend zu diesem Buch die Dokumentation zu Rate zu ziehen.
 - *lib*: Enthält alle benötigten Bibliotheken, inklusive der Standardbibliothek. Die Standardbibliothek enthält viel nützliche Programmbausteine, darunter geläufige Datenstrukturen, einen JSON-Parser, Kompressionsalgorithmen, kryptographische Algorithmen und Protokolle und vieles mehr. Eine Dokumentation der gesamten Standardbibliothek findet sich online  unter #link("https://ziglang.org/documentation/0.13.0/std/").
-- *zig*: Dies ist der Compiler, den wir im Laufe dieses Buchs exzessiv verwenden werden.
+- *zig*: Dies ist ein Kommandozeilenwerkzeug mit dem unter anderem Zig-Programme kompiliert werden können.
 
 Um den Zig-Compiler nach dem Entpacken auf einem Linux System zu installieren, können wir diesen nach _/usr/local/bin_ verschieben.
 
@@ -134,13 +134,13 @@ Nach der Definition der Konstante `std` beginnt die `main` Funktion:
 pub fn main() !void {
 ```
 
-Unsere `main` Funktion beginnt, wie alle Funktionen, mit `fn` und dem Namen der Funktion. Sie gibt keinen Wert zurück, aus diesem Grund folgt auf die leere Parameterliste `()` der Rückgabetyp `void`. Das Ausrufezeichen `!` weist darauf hin, das die Funktion einen Fehler zurückgeben kann.
+Unsere `main` Funktion beginnt, wie alle Funktionen, mit `fn` und dem Namen der Funktion. Sie gibt keinen Wert zurück, aus diesem Grund folgt auf die leere Parameterliste `()` der Rückgabetyp `void`. Das Ausrufezeichen `!` weist darauf hin, das die Funktion einen Fehler zurückgeben kann. Fehler in Zig sind eigenständige Werte, die von einer Funktion zurückgegeben werden können und sich semantisch vom eigentlichen Rückgabewert unterscheiden.
 
 ```zig
 std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
 ```
 
-Als erstes gibt die `main` Funktion einen String über die Debugausgabe auf der Kommandozeile aus. Die Funktion `print` erwartet dabei einen Format-String, der mit Platzhaltern (z.B. `{s}`) angereichert werden kann, sowie eine Liste an Ausdrücken (z.B. `.{"codebase"}`) deren Werte in den String eingefügt werden sollen. Der Platzhalter `{s}` gibt z.B. an, dass an der gegebenen Stelle ein String eingefügt werden soll. Neben `s` gibt es unter anderem noch `d` für Ganzzahlen und `any` für beliebige werte. 
+Als erstes gibt die `main` Funktion einen String über die Debugausgabe auf der Kommandozeile aus. Die Funktion `print` erwartet dabei einen Format-String, der mit Platzhaltern (z.B. `{s}`) versehen werden kann, sowie eine Liste an Ausdrücken (z.B. `.{"codebase"}`) deren Werte in den String eingefügt werden sollen. Der Platzhalter `{s}` gibt z.B. an, dass an der gegebenen Stelle ein String eingefügt werden soll. Neben `s` gibt es unter anderem noch `d` für Ganzzahlen und `any` für beliebige werte. 
 
 ```zig
 const stdout_file = std.io.getStdOut().writer();
@@ -192,7 +192,7 @@ fn gcd(n: u64, m: u64) u64 {
 
 Das `fn` Schlüsselwort markiert den Beginn einer Funktion. Im gegebenen Beispiel definieren wir eine Funktion mit dem Name `gcd`, welche zwei Argumente `m` und `n`, jeweils vom Typ `u64`, erwartet. Nach der Liste an Argumenten in runden Klammern folgt der Typ des erwarteten Rückgabewertes. Da die Funktion den größten gemeinsamen Teiler zweier `u64` Ganzzahlen berechnet ist auch der Rückgabewert vom Typ `u64`. Der Körper der Funktion wird in geschweifte Klammern gefasst.
 
-Zig unterscheidet zwischen zwei Variablen-Typen, Variablen und Konstanten. Konstanten können nach ihrer Initialisierung nicht mehr verändert werden, während Variablen neu zugewiesen werden können. Funktionsargumente zählen grundsätzlich zu Konstanten, d.h. sie können nicht verändert werden. Der Zig-Compiler erzwingt die Nutzung von Konstanten, sollte eine Variable nach ihrer Initialisierung nicht mehr verändert werden. Dies ist eine durchaus kontroverse Designentscheidung, kann aber auf das Zig-Zen zurückgeführt werden das besagt: ,,Favor reading code over writing code". Sollten Sie also eine Variable in fremden Code sehen so können Sie sicher sein, dass diese an einer anderen Stelle manipuliert bzw. neu zugewiesen wird.
+Zig unterscheidet zwischen zwei Variablen-Typen, Variablen und Konstanten. Konstanten können nach ihrer Initialisierung nicht mehr verändert werden, während Variablen neu zugewiesen werden können. Funktionsargumente zählen grundsätzlich zu Konstanten, d.h. sie können nicht verändert werden. Der Zig-Compiler erzwingt die Nutzung von Konstanten, sollte eine Variable nach ihrer Initialisierung nicht mehr verändert werden. Dies ist eine durchaus kontroverse Designentscheidung, welche aber auf das Zig-Zen zurückgeführt werden kann, das besagt: ,,Favor reading code over writing code". Sollten Sie also eine Variable in fremden Code sehen so können Sie sicher sein, dass diese an einer anderen Stelle manipuliert bzw. neu zugewiesen wird.
 
 Eine Besonderheit, die Zig von anderen Sprachen unterscheidet ist, dass Integer mit beliebiger Präzision unterstützt werden. Im obigen Beispiel handelt es sich bei `u64` um eine vorzeichenlose Ganzzahl (unsigned integer) mit 64 Bits, d.h. es können alle Zahlen zwischen 0 und $2^64 - 1$ dargestellt werden. Zig unterstützt jedoch nicht nur `u8`, `u16`, `u32` oder `u128` sondern alle unsigned Typen zwischen `u0` und `u65535`.
 
@@ -202,9 +202,9 @@ Alle Zig-Basistypen sind Teil des selben `union`: std.builtin.Type. Das union be
 
 
 
-Innerhalb des Funktonskörpers werden mittels `if` verschiedene Bedingungen abgefragt. Sollte eine beider Zahlen 0 sein, so wird die andere zurückgegeben, ansonsten wird `gcd` rekursiv aufgerufen bis eine beider Zahlen 0 ist. Wie auch bei C muss die Bedingung in runde Klammern gefasst werden. Bei Einzeilern können die geschweiften Klammern um einen Bedingungsblock weggelassen werden. In diesem Fall wird der Inhalt des Bedingungsblocks an den umschließenden Block gereicht.
+Innerhalb des Funktonskörpers werden mittels `if` verschiedene Bedingungen abgefragt. Sollte eine beider Zahlen 0 sein, so wird jeweils die andere zurückgegeben, ansonsten wird `gcd` rekursiv aufgerufen bis für eine der beiden Zahlen die Abbruchbedingung ($0$) erreicht ist. Wie auch bei C muss die Bedingung in runde Klammern gefasst werden. Bei Einzeilern können die geschweiften Klammern um einen Bedingungsblock weggelassen werden. In diesem Fall wird der Rückgabewert der Bedingung an den umschließenden Block gereicht.
 
-Mittels eines `return` Statements kann von einer Funktion in die aufrufende Funktion zurückgekehrt werden. Das Statement nimmt bei bedarf zusätzlich einen Wert der an die aufrufende Funktion zurückgegeben werden soll. Im obigen Beispiel gibt `gcd` mittels `return` den Wert des ausgeführten Bedingungsblocks zurück.
+Mittels eines `return` Statements kann von einer Funktion in die aufrufende Funktion zurückgekehrt werden. Das Statement nimmt bei bedarf zusätzlich einen Wert der an die aufrufende Funktion zurückgegeben werden soll. Im obigen Beispiel gibt `gcd` mittels `return` den Wert des ausgeführten If-Else-Asudruck zurück.
 
 Das vollständige Programm finden Sie im zugehörigen Github-Rerpository. Mittels *`zig build-exe chapter01/gcd.zig`* kann das Beispiel kompiliert werden.
 
@@ -226,7 +226,7 @@ $ zig test chapter01/gcd.zig
 All 1 tests passed.
 ```
 
-Innerhalb einer Datei sind Definitionen auf oberster Ebene (top-level definitions) unabhängig von ihrer Reihenfolge, was die Definition von Tests mit einschließt. Damit können Tests an einer beliebigen Stelle definiert werden, darunter direkt neben der zu testenden Funktion oder am Ende einer Datei. Der Zig-Test-Runner sammelt automatisch alle definierten Tests und führt dies beim Aufruf von *`zig test`* aus. Worauf Sie jedoch achten müssen ist, dass Sie ausgehend von der Wurzel-Datei, die konzeptionell den Eintritspunkt für den Compiler in ihr Programm oder Ihre Bibliothek darstellt, Zig mitteilen müssen in welchen Dateien zusätzlich nach Tests gesucht werden soll. Dies bewerkstelligen Sie, indem Sie die entsprechende Datei innerhalb eines Tests importieren.
+Innerhalb einer Datei sind Definitionen auf oberster Ebene (top-level definitions) unabhängig von ihrer Reihenfolge, was die Definition von Tests mit einschließt. Damit können Tests an einer beliebigen Stelle definiert werden, darunter direkt neben der zu testenden Funktion oder am Ende einer Datei. Der Zig-Test-Runner sammelt automatisch alle definierten Tests und führt dies beim Aufruf von *`zig test`* aus. Worauf Sie jedoch achten müssen ist, dass Sie ausgehend von der Wurzel-Datei (in den meisten Fällen _src/root.zig_), die konzeptionell den Eintritspunkt für den Compiler in ihr Programm oder Ihre Bibliothek darstellt, Zig mitteilen müssen in welchen Dateien zusätzlich nach Tests gesucht werden soll. Dies bewerkstelligen Sie, indem Sie die entsprechende Datei innerhalb eines Tests importieren.
 
 ```zig
 const foo = @import("foo.zig");
@@ -240,7 +240,7 @@ test "main tests" {
 
 Die meisten Sprachen erlauben eine Form von Metaprogrammierung, d.h. das Schreiben von Code der wiederum Code generiert. In C können die gefürchteten Makros mit dem Präprozessor verwendet werden und Rust bietet sogar zwei verschiedene Typen von Makros, jeweils mit einer eigenen Syntax. Zig bietet mit `comptime` seine eigene Form der Metaprogrammierung. Was Zig von anderen kompilierten Sprachen unterscheidet ist, dass die Metaprogrammierung in der Sprache selber erfolgt, d.h., wer Zig programmieren kann, der hat alles nötige Handwerkszeug um auch Metaprogrammierung in Zig zu betreiben.
 
-Ein Aufgabe für die Metaprogrammierung sehr gut geeignet ist, ist die Implementierung von Container-Typen wie etwa `std.ArrayList`. Eine `ArrayList` ist ein Liste von Elementen eines beliebigen Typen, die eine Menge an Standardfunktionen bereitstellt um die Liste zu manipulieren. Nun wäre es sehr aufwändig die `ArrayList` für jeden Typen einzeln implementieren zu müssen. Aus diesem Grund ist `ArrayList` als Funktion implementiert, welche zur Compilezeit einen beliebigen Typen übergeben bekommt auf Basis dessen ein eigener `ArrayList`-Typ generiert wird. 
+Ein Aufgabe für die Metaprogrammierung sehr gut geeignet ist, ist die Implementierung von Container-Typen wie etwa `std.ArrayList`. Eine `ArrayList` ist ein Liste von Elementen eines beliebigen Typen, die eine Menge an Standardfunktionen bereitstellt um die Liste zu manipulieren. Nun wäre es sehr aufwändig die `ArrayList` für jeden Typen einzeln implementieren zu müssen. Aus diesem Grund ist `ArrayList` als Funktion implementiert, welche zur Compilezeit einen beliebigen Typen übergeben bekommt auf Basis dessen einen `ArrayList`-Typ generiert. 
 
 ```zig
 var list = std.ArrayList(u8).init(allocator);
@@ -304,7 +304,7 @@ pub fn main() !void {
 }
 ```
 
-Mit dem `comptime` Keyword sagen wir dem Compiler, dass das Argument `T` zur Compilezeit erwartet wird. Beim Aufruf von `MyArrayList(u8)` wertet der Compiler die Funktion aus und generiert dabei einen neuen Typen. Das praktische ist, dass wir die eigentliche Funktionalität der unserer ArrayList nur einmal implementieren müssen.
+Mit dem `comptime` Keyword sagen wir dem Compiler, dass das Argument `T` zur Compilezeit erwartet wird. Beim Aufruf von `MyArrayList(u8)` wertet der Compiler die Funktion aus und generiert dabei einen neuen Typen. Das praktische ist, dass wir `MyArrayList` nur einmal implementieren müssen und diese im Anschluss mit einem beliebigen Typen verwenden können. 
 
 Der `comptime` Typ `T` kann innerhalb und auch außerhalb des von der Fukntion `MyArrayList` zurückgegebenen Structs, anstelle eines expliziten Typs, verwendet werden. 
 
@@ -363,7 +363,211 @@ info: c: false
 
 Reflexion kann in vielen Situationen äußerst nützlich sein, darunter der Implementierung von Parsern für Formate wie JSON oder CBOR #footnote[https://github.com/r4gus/zbor], da im Endeffekt nur zwei Funktionen implementiert werden müssen, eine zum Serialisieren der Daten und eine zum Deserialisieren. Mithilfe von Reflexion kann dann, vom Compiler, für jeden zu serialisierenden Datentyp eine Kopie der Funktionen erzeugt werden, die auf den jeweiligen Typen zugeschnitten ist.
 
-== Kommandozeilenargumente
+== Kryptographie
+
+Ein Großteil der Anwendungen, die Sie wahrscheinlich täglich verwenden, benutzt in irgend einer Form Kryptographie. Dabei handelt es sich grob gesagt um mathematische Algorithmen, mit denen vorwiegend die Vertraulichkeit (Confidentiality), Integrität (Integrity) und Authentizität (Authenticity) von Daten gewährleistet werden kann. Typische Anwendungsbereiche die Kryptographie verwenden sind Messenger, Video Chats, Networking (TLS), Passwortmanager und Smart Cards. Zig bietet in seiner Standardbibliothek bereits jetzt eine Vielzahl and kryptographischen Algorithmen und Protokollen, wobei ein Großteil davon von Frank Denis #footnote[https://github.com/jedisct1], Online auch bekannt als jedisct1, beigetragen wurde. Ohne groß ein Authoritätsargument aufmachen zu wollen, ist Frank der Maintainer von libsodium #footnote[https://github.com/jedisct1/libsodium] und libhydrogen #footnote[https://github.com/jedisct1/libhydrogen], zwei viel genutzte, kryptographische Bibliotheken.
+
+Wir werden uns in einem späteren Kapitel noch genauer mit Kryptographie auseinandersetzen, machen Sie sich deshalb keine Sorgen, wenn Sie nicht alles in diesem Abschnitt auf Anhieb verstehen. Fürs erste schauen wir uns einen gängigen Anwendungsfall von Kryptographie an, die Verschlüsselung einer Datei. Angenommen wir haben eine Datei deren Inhalt geheim bleiben soll und wir wollen des weiteren überprüfen können, dass der Inhalt der Datei nicht verändert wurde. In solch einem Fall bietet sich die Verwendung eines AEAD (Authenticated Encryption with Associated Data) Ciphers an. Zig bietet unter `std.crypto.aead` verschiedene AEAD Cipher an. Die Unterschiede zwischen den Ciphern ist für dieses Beispiel Out-of-Scope. Sie müssen sich fürs erste damit begnügen mir zu glauben, dass `XChaCha20Poly1305` #footnote[https://datatracker.ietf.org/doc/html/rfc7539] für diese Art von Problem eine gute Wahl ist. Der Name `XChaCha20Poly1305` enthält dabei zwei Informationen, die uns Aufschluss über die Zusammensetzung des Ciphers geben:
+
+- `XChaCha20`: Zur Verschlüsselung der Daten wird die "Nonce-eXtended" Version der `ChaCha20` Stromchiffre verwendet. `XChaCha20` erwartet einen Schlüssel und eine Nonce (Number used once: Eine Byte-Sequenz die nur einmal für eine Verschlüsselung verwendet werden darf) und leitet daraus eine Schlüsselsequenz ab, die mit dem Klartext XORed wird. Die eXtended Version verwendet dabei eine 192-Bit Nonce anstelle einer 96-Bit Nonce, was es deutlich sicherer macht diese zufällig mittels eines (kryptographisch sicheren) Zufallszahlengenerators zu erzeugen. Dieser Teil des Algorithmus ist für die Vertraulichkeit der Daten verantwortlich.
+- `Poly1305`: `Poly1305` ist ein Hash, der zur Erzeugung von (one-time) Message Authentication Codes (MAC) verwendet werden kann. MACs sind sogenannte Keyed-Hashfunktionen, bei denen in einen Hash (keine Sorge, wir werden uns noch näher damit beschäftigen) ein geheimer Schlüssel integriert wird. Die Hashsumme wird dabei in unserem Beispiel über den Ciphertext, d.h. den Verschlüsselten Text, gebildet #footnote[Dies wird als Encrypt-than-Mac bezeichnet.]. Durch den Einbezug eines Schlüssels kann nicht nur überprüft werden, dass die Integrität der Datei nicht verletzt wurde (sie wurde nicht verändert), sondern es kann auch sichergestellt werden, dass die MAC von Ihnen generiert wurde, da nur Sie als Nutzer der Anwendung den geheimen Schlüssel kennen.
+
+```zig
+// chapter01/encrypt.zig
+const std = @import("std");
+
+const argon2 = std.crypto.pwhash.argon2;
+const XChaCha20Poly1305 = std.crypto.aead.chacha_poly.XChaCha20Poly1305;
+
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const allocator = gpa.allocator();
+
+const Mode = enum {
+    encrypt,
+    decrypt,
+};
+
+pub fn main() !void {
+    var password: ?[]const u8 = null;
+    var mode: ?Mode = null;
+
+    // Als erstes parsen wir die übergebenen Kommandozeilenargumente. 
+    // Diese bestimmen zum einen mit welchem Passwort die Daten 
+    // verschlüsselt werden sollen und zum anderen den Modus, d.h. 
+    // ob ver- bzw. entschlüsselt werden soll.
+    var ai = try std.process.argsWithAllocator(allocator);
+    defer ai.deinit();
+
+    while (ai.next()) |arg| {
+        // `std.mem.eql` kann dazu verwendet werden zwei Strings mit einander zu vergleichen...
+        if (arg.len > 11 and std.mem.eql(u8, "--password=", arg[0..11])) {
+            password = arg[11..];
+        } else if (arg.len >= 9 and std.mem.eql(u8, "--encrypt", arg[0..9])) {
+            mode = .encrypt;
+        } else if (arg.len >= 9 and std.mem.eql(u8, "--decrypt", arg[0..9])) {
+            mode = .decrypt;
+        }
+    }
+
+    // Sollten nicht alle benötigten Argumente übergeben worden sein, so beenden wir den Prozess.
+    if (password == null or mode == null) {
+        std.log.err("usage: ./encrypt --password=<password> [--encrypt|--decrypt]", .{});
+        return;
+    }
+
+    // Als nächstes lesen wir die übergebenen Daten von `stdin` ein.
+    const stdin = std.io.getStdIn();
+    const data = try stdin.readToEndAlloc(allocator, 64_000);
+    defer {
+        // Wir überschreiben die Daten bevor wir den Speicher wieder freigeben.
+        @memset(data, 0);
+        allocator.free(data);
+    }
+
+    if (mode == .encrypt) {
+        // Bei der Verschlüsselung müssen wir eine Reihe an (öffentlichen)
+        // Parametern festlegen, die bei der Entschlüsselung wiederverwendet
+        // werden müssen.
+
+        // Als erstes müssen wir ein Schlüssel von unserem Passwort ableiten.
+        // Hierfür verwenden wir die Argon2id Key-Derivation-Function (KDF).
+        var salt: [32]u8 = undefined;
+        std.crypto.random.bytes(&salt);
+
+        var key: [XChaCha20Poly1305.key_length]u8 = undefined;
+        try argon2.kdf(allocator, &key, password.?, &salt, .{
+            // Die Parameter bestimmen wie aufwendig die Brechnung des Schlüssels `key` ist.
+            // Damit wird verhindert, diesen durch "Brute-Forcing" brechen zu können.
+            .t = 3,
+            .m = 4096,
+            .p = 1,
+        }, .argon2id);
+
+        // Nun können wir die Daten ver-/ bzw. entschlüsseln.
+
+        // Der TAG wird von der encrypt() Funktion erzeugt und später 
+        // von decrypt() überprüft.
+        var tag: [XChaCha20Poly1305.tag_length]u8 = undefined;
+
+        // Für jede Verschlüsselung muss eine neue, einzigartige Nonce 
+        // verwendet werden. Da wir die eXtended Version von ChaCha20 
+        // verwenden, kann diese durch einen kryptographisch sicheren 
+        // Zufallszahlengenerator festgelegt werden.
+        var nonce: [XChaCha20Poly1305.nonce_length]u8 = undefined;
+        std.crypto.random.bytes(&nonce);
+
+        XChaCha20Poly1305.encrypt(data, &tag, data, "", nonce, key);
+
+        // Der Salt, Nonce und Tag müssen mit den verschlüsselten Daten serialisiert werden,
+        // da wir diese später zur Entschlüsselung benötigen.
+        const stdout = std.io.getStdOut();
+        try std.fmt.format(stdout.writer(), "{s}:{s}:{s}:{s}", .{
+            // Wir serialisieren die Binärdaten in Hexadezimal.
+            std.fmt.fmtSliceHexLower(salt[0..]),
+            std.fmt.fmtSliceHexLower(nonce[0..]),
+            std.fmt.fmtSliceHexLower(tag[0..]),
+            std.fmt.fmtSliceHexLower(data),
+        });
+    } else {
+        // Da wir die Daten in Hexadezimal serialisiert haben, müssen wir diese
+        // wieder voneinander trennen und in Binärdaten umwandeln.
+        var si = std.mem.split(u8, data, ":");
+
+        const salt = si.next();
+        if (salt == null or salt.?.len != 32 * 2) {
+            std.log.err("invalid data (missing salt)", .{});
+            return;
+        }
+        var salt_: [32]u8 = undefined;
+        _ = try std.fmt.hexToBytes(&salt_, salt.?);
+
+        const nonce = si.next();
+        if (nonce == null or nonce.?.len != XChaCha20Poly1305.nonce_length * 2) {
+            std.log.err("invalid data (missing nonce)", .{});
+            return;
+        }
+        var nonce_: [XChaCha20Poly1305.nonce_length]u8 = undefined;
+        _ = try std.fmt.hexToBytes(&nonce_, nonce.?);
+
+        const tag = si.next();
+        if (tag == null or tag.?.len != XChaCha20Poly1305.tag_length * 2) {
+            std.log.err("invalid data (missing tag)", .{});
+            return;
+        }
+        var tag_: [XChaCha20Poly1305.tag_length]u8 = undefined;
+        _ = try std.fmt.hexToBytes(&tag_, tag.?);
+
+        const ct = si.next();
+        if (ct == null) {
+            std.log.err("invalid data (missing cipher text)", .{});
+            return;
+        }
+
+        const pt = try allocator.alloc(u8, ct.?.len / 2);
+        defer {
+            @memset(pt, 0);
+            allocator.free(pt);
+        }
+
+        _ = try std.fmt.hexToBytes(pt, ct.?);
+
+        // Danach können wir die deserialisierten Daten verwenden um 
+        // den Ciphertext zu entschlüsseln.
+        var key: [XChaCha20Poly1305.key_length]u8 = undefined;
+        try argon2.kdf(allocator, &key, password.?, &salt_, .{
+            .t = 3,
+            .m = 4096,
+            .p = 1,
+        }, .argon2id);
+
+        try XChaCha20Poly1305.decrypt(pt, pt, tag_, "", nonce_, key);
+
+        const stdout = std.io.getStdOut();
+        try std.fmt.format(stdout.writer(), "{s}", .{pt});
+    }
+}
+```
+
+In diesem Beispiel laufen eine Vielzahl von Konzepten zusammen, die sie im Laufen diese Buches noch häufiger antreffen werden. Unsere Anwendung erwartet Daten, z.B. den Inhalt einer Datei, über `stdin`, sowie zwei Kommandozeilenargumente: `--password` und `--encrypt` bzw. `--decrypt`. Basierend auf diesen Argumenten werden die übergebenen Daten entweder verschlüsselt oder entschlüsselt und nach `stdout` geschrieben.
+
+Wir beginnen mit einigen Top-Level-Deklarationen, damit wir den Pfad zu Datenstrukturen, wie etwa `XChaCha20Poly1305`, nicht immer ausschreiben müssen. Weiterhin definieren wir ein Enum `Mode` welches zwei operationelle Zustände ausdrücken kann, Verschlüsselung (`encrypt`) und Entschlüsselung (`decrypt`).
+
+Innerhalb von `main` parsen wir zuerst die übergebenen Argumente, indem wir durch die Funktion `argsWithAllocator()` einen Iterator über die Kommandozeilenargumente beziehen und mithilfe dessen über die einzelnen Argumente iterieren. Iteratoren sind ein häufig wiederzufindendes Konzept und lassen sich hervorragend mit `while` Schleifen kombinieren. Solange `ai.next()` ein Element zurückliefert, wird diese an `arg` gebunden und die Schleife wird fortgeführt. Liefert `next()` den Wert `null` zurück, so wird automatisch aus der Schleife ausgebrochen.
+
+Danach stellen wir sicher, dass sowohl ein Passwort als auch ein Modus vom Nutzer spezifiziert wurden. Sollte eines der beiden Argumente fehlen, so wird ein entsprechender Fehler gelogged und der Prozess vorzeitig beendet.
+
+Als nächstes wird eine über `stdin` übergebene Datei eingelesen und an die Konstante `data`gebunden. Da der für die Datei benötigte Speicher dynamisch alloziert wird muss dieser wider freigegeben werden. Hierfür wird eine `defer`-Block verwendet, der vor Beendigung der Anwendung ausgeführt wird. Innerhalb dieses Blocks wird zusätzlich der Speicherinhalt mittels `@memset` überschrieben.
+
+#tip-box([
+Der Umgang mit Sicherheitsrelevanten Daten ist durchaus herausfordernd. Grundsätzlich muss darauf geachtet werden, dass sensible Daten nicht zu lange im Speicher verweilen. Voraussetzung hierfür ist, dass Sie überhaupt wissen wo überall sensible Daten abgespeichert werden. Zum einen können Sie Daten, nachdem diese nicht mehr benötigt werden, überschreiben. Sie sollten jedoch auch weniger offensichtlich Angriffsvektoren, wie das Swappen von Hauptspeicher, im Hinterkopf behalten.
+])
+
+Sowohl für die Ver- als auch Entschlüsselung muss zuerst ein geheimer Schlüssel vom übergebenen Passwort, mittels einer Key-Derivation-Funktion, abgeleitet werden. Für diese Beispiel wird _Argon2id_ #footnote[https://en.wikipedia.org/wiki/Argon2], der Gewinner der 2015 Password Hashing Competition, verwendet. Die Berechnung eines Schlüssels durch Argon2 hängt von den Folgenden (öffentlichen) Parametern ab:
+
+- Salt: eine zufällige Sequenz die in die Schlüsselberechnung einfließt.
+- Time: Die Anzahl an Iterationen für die Berechnung.
+- Memory: Die Speicher-Kosten für die Berechnung.
+- Parallelismus: Die Anzahl an parallelen Berechnungen.
+
+Time, Memory und Parallelismus bestimmen wie aufwändig die Ableitung eines Schlüssels ist. Grundsätzlich gilt: je aufwendiger desto besser, jedoch schlägt sich dies auch in einer längeren Wartezeit nieder (spielen Sie deshalb gerne mit den Parametern). Alle Parameter werden bei der Verschlüsselung festgelegt und müssen mit dem Ciphertext zusammen gespeichert werden, da bei der Entschlüsselung die selben Parameter wieder in die KDF einfließen müssen um den Selben Schlüssel vom Passwort abzuleiten.
+
+Zur Verschlüsselung wird eine zufällige Nonce generiert welche zusammen mit den zu verschlüsselnden Daten, einem Zeiger auf ein Array für den Tag, zusätzliche Daten (in diesem Fall der leere String `""`) und dem abgeleiteten Schlüssel an `encrypt` übergeben werden. Die Funktion verschlüsselt daraufhin die Daten. Danach wird der Salt, die Nonce, der Tag, sowie die verschlüsselten Daten, getrennt durch ein `:`, in die Standardausgabe `stdout` geschrieben.
+
+Für die Entschlüsselung wird dieser String anhand der `:`, mittels `split`, aufgeteilt. Sollten die eingelesenen Daten nicht im erwarteten Format vorliegen, das heißt Salt, Nonce, Tag oder Ciphertext fehlen, so wird ein Fehler ausgegeben und die Anwendung beendet. Andernfalls, werden die eingelesenen Parameter verwendet um den Ciphertext, mittels `decrypt`, wieder zu entschlüsseln.
+
+Das kleine Verschlüsselungsprogramm kann wie folgt verwendet werden:
+
+```bash
+$ cat hello.txt 
+Hello, World!
+$ cat hello.txt | ./encrypt --password=supersecret --encrypt > secret.txt
+$ cat secret.txt 
+828dfa14efa4b1f8242a8258a411301bd79bc4b7528294500305a4e9baaecbba:
+85e4593786697e4e49212131a8e6e6bb68d25f43613dd870:ec666e95ebe1fa4c
+53a1183379ae0dbd:80a7fe0475834364229c15dfb96d
+$ cat secret.txt | ./encrypt --password=supersecret --decrypt
+Hello, World!
+```
 
 == Parallelität
 

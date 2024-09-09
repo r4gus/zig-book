@@ -1,0 +1,4 @@
+*.o
+*.swp
+zig-out
+zig-cache
