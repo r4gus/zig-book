@@ -569,6 +569,139 @@ $ cat secret.txt | ./encrypt --password=supersecret --decrypt
 Hello, World!
 ```
 
+== Graphische Applikationen
+
+Ein weiterer Anwendungsfall für Zig ist die Entwicklung graphischer Applikationen. Hierfür existiert eine Vielzahl an Bibliotheken, darunter GTK und QT. Was beide Bibliotheken gemeinsam haben ist, dass sie in C beziehungsweise C++ geschrieben sind. Normalerweise würde das die Entwicklung von Bindings voraussetzen, um die Bibliotheken in anderen Sprachen nutzen zu können. Zig integriert jedoch direkt C, wodurch C-Bibliotheken direkt verwendet werden können #footnote[Mit wenigen Einschränkungen. Zig scheitert zurzeit noch an der Übersetzung einer Makros.].
+
+In diesem Abschnitt zeige ich Ihnen, wie sie eine simple GUI-Applikation mit GTK4 und Zig schreiben können. Hierfür müssen Sie zuerst einen neuen Projektordner anlegen.
+
+```bash
+$ mkdir gui
+$ cd gui
+$ zig init
+info: created build.zig
+info: created build.zig.zon
+info: created src/main.zig
+info: created src/root.zig
+info: see `zig build --help` for a menu of options
+```
+
+Danach fügen Sie `gtk4` als Bibliothek zu Ihrer Anwendung hinzu. Hierfür öffnen Sie `build.zig` mit einem Texteditor und erweitern die Datei um die folgenden Zeilen:
+
+```zig
+// chapter01/gui/build.zig
+//...
+const exe = b.addExecutable(.{
+    //...
+});
+// Fügen Sie die folgenden beiden Zeilen hinzu
+exe.linkLibC();
+exe.linkSystemLibrary("gtk4"); 
+//...
+```
+
+Stellen Sie sicher, dass Sie die Developer-Bibliothek von GTK4 auf Ihrem System installiert haben. Unter Debian/Ubuntu können Sie diese über den APT-Paket-Manager installieren.
+
+```bash
+sudo apt install libgtk-4-dev
+```
+
+Führen Sie danach *`zig build`* aus um zu überprüfen, dass Zig die benötigte Bibliothek auf Ihrem System findet. Erzeugen Sie als nächstes die Datei _src/gtk.zig_ und fügen Sie den Folgenden Code hinzu:
+
+```zig
+// chapter01/gui/src/gtk.zig
+pub usingnamespace @cImport({
+    @cInclude("gtk/gtk.h");
+});
+
+const c = @cImport({
+    @cInclude("gtk/gtk.h");
+});
+
+/// g_signal_connect re-implementieren
+pub fn z_signal_connect(
+    instance: c.gpointer,
+    detailed_signal: [*c]const c.gchar,
+    c_handler: c.GCallback,
+    data: c.gpointer,
+) c.gulong {
+    var zero: u32 = 0;
+    const flags: *c.GConnectFlags = @as(*c.GConnectFlags, @ptrCast(&zero));
+    return c.g_signal_connect_data(
+        instance,
+        detailed_signal,
+        c_handler,
+        data,
+        null,
+        flags.*,
+    );
+}
+```
+
+Zig ist zwar ziemlich gut darin mit C zu integrieren, jedoch werden Sie von Zeit zu Zeit noch auf Probleme stoßen. In den meisten Fällen lässt sich dies jedoch relativ einfach lösen. 
+Innerhalb von `src/gtk.zig` inkludieren wir zuerst die GTK4 Header-Datei `gtk.h`. Wie Ihnen vielleicht aufgefallen ist, haben wir an keiner Stelle innerhalb von `build.zig` auf diese Datei verwiesen. Zig reicht es in den aller meisten Fällen aus, wenn Sie die Bibliothek benennen die Sie einbinden möchten und fügt die benötigten Pfade automatisch hinzu. 
+
+Das Schlüsselwort `usingnamespace` sorgt dafür, dass wir auf alle in `gtk.h` deklarierten Objekte, über `gtk.zig`, direkt zugreifen können. 
+
+Eine in `gtk.h` deklarierte Funktion, die wir später noch benötigen, ist `g_signal_connect`. Diese lässt sich leider nicht ohne weiteres direkt verwenden (einer der seltenen Fälle bei denen Zig derzeit noch versagt). Aus diesem Grund implementieren wir die Funktion selber und nennen unsere Implementierung `z_signal_connect`.
+
+Nun haben wir alles vorbereitet und können uns um die eigentliche Anwendung kümmern. Ersetzen Sie den Code in `src/main.zig` mit dem folgenden Programm:
+
+```zig
+// chapter01/gui/src/main.zig
+const std = @import("std");
+const gtk = @import("gtk.zig");
+
+fn onActivate(app: *gtk.GtkApplication) void {
+    const window: *gtk.GtkWidget = gtk.gtk_application_window_new(app);
+
+    gtk.gtk_window_set_title(
+        @as(*gtk.GtkWindow, @ptrCast(window)),
+        "Zig Basics",
+    );
+    gtk.gtk_window_set_default_size(
+        @as(*gtk.GtkWindow, @ptrCast(window)),
+        920,
+        640,
+    );
+
+    gtk.gtk_window_present(@as(*gtk.GtkWindow, @ptrCast(window)));
+}
+
+pub fn main() !void {
+    const application = gtk.gtk_application_new(
+        "de.zig.basics",
+        gtk.G_APPLICATION_FLAGS_NONE,
+    );
+    _ = gtk.z_signal_connect(
+        application,
+        "activate",
+        @as(gtk.GCallback, @ptrCast(&onActivate)),
+        null,
+    );
+    _ = gtk.g_application_run(
+        @as(*gtk.GApplication, @ptrCast(application)),
+        0,
+        null,
+    );
+}
+```
+
+Ganz oben importieren wir die Standardbibliothek, als auch die Datei `gtk.zig` unter dem Namen `gtk`. Danach folgt die Funktion `onActivate`, welche verwendet wird um ein GTK-Fenster zu erzeugen. Schauen wir uns aber zuerst die `main` Funktion an.
+
+Innerhalb von `main` wird als erstes, mithilfe von `gtk_application_new`,  ein Anwendungsobjekt erzeugt, welches an die Konstante `application` gebunden wird. Als nächstes wird an Callback registriert, der durch das Signal `activate` aufgerufen wird. Als Callback nutzen wir die Funktion `onActivate`. Nachdem die Anwendung mittels `g_application_run` die GTK-Anwendung gestartet hat, wird das `activate` Signal ausgelöst, wodurch `onActivate` aufgerufen wird.
+
+Die Funktion `onActivate` erzeugt als erstes ein neues Fenster für die Anwendung und weist dem Fenster, mithilfe von `get_window_set_title`, den Titel _Zig Basics_ zu. Danach wird eine Fenstergröße von _920 x 640_ Pixeln festgelegt, bevor das Fenster mit `gtk_window_present` angezeigt wird.
+
+Innerhalb des Root-Verzeichnisses des Projekts können Sie mit *`zig build run`* die Anwendung starten. Nach dem Starten des Programms sollten Sie ein leeres Fenster sehen.
+
+#figure(
+  image("../images/chapter01/gtk-window.png", width: 60%),
+  caption: [
+    Leeres GKT4-Fenster
+  ],
+)
+
 == Parallelität
 
 == C/C++ Build System

@@ -2,7 +2,7 @@
 
 Zig ist eine Sprache geeignet für die Systemprogrammierung.
 
-Das alleine macht Zig nicht besonders, jedoch verheiratet Zig die Simplizität von C mit vielen modernen Features, was vor allem Neulingen, die eine systemnahe Programmiersprache lernen wollen, zugute kommt. Fun-Fact: Die gesamte Sprache kommt mit weniger als 50 Schlüsselwörtern aus.
+Das alleine macht Zig nicht besonders, jedoch verheiratet Zig die Simplizität von C mit vielen modernen Features, was vor allem Neulingen, die eine systemnahe Programmiersprache lernen wollen, zugute kommt. 
 
 Zig als Systemprogrammiersprache ist unter anderem geeignet für:
 
