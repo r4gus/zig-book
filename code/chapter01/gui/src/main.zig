@@ -1,6 +1,10 @@
 const std = @import("std");
 const gtk = @import("gtk.zig");
 
+fn onButtonClicked(_: *gtk.GtkWidget, _: gtk.gpointer) void {
+    std.log.info("Hello, World!", .{});
+}
+
 fn onActivate(app: *gtk.GtkApplication) void {
     const window: *gtk.GtkWidget = gtk.gtk_application_window_new(app);
 
@@ -12,6 +16,18 @@ fn onActivate(app: *gtk.GtkApplication) void {
         @as(*gtk.GtkWindow, @ptrCast(window)),
         920,
         640,
+    );
+
+    const button = gtk.gtk_button_new_with_label("Click Me!");
+    gtk.gtk_window_set_child(
+        @as(*gtk.GtkWindow, @ptrCast(window)),
+        @as(*gtk.GtkWidget, @ptrCast(button)),
+    );
+    _ = gtk.z_signal_connect(
+        button,
+        "clicked",
+        @as(gtk.GCallback, @ptrCast(&onButtonClicked)),
+        null,
     );
 
     gtk.gtk_window_present(@as(*gtk.GtkWindow, @ptrCast(window)));
