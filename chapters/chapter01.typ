@@ -1,4 +1,4 @@
-#import "../tip-box.typ": tip-box
+#import "../tip-box.typ": tip-box, code
 
 = Zig Crash Course
 
@@ -101,6 +101,7 @@ Die Datei _build.zig.zon_ enthält weitere Informationen über das Projekt, daru
 
 Schauen wir in _src/main.zig_, so sehen wir das Zig für uns ein kleines Programm geschrieben hat.
 
+#code(
 ```zig
 const std = @import("std");
 
@@ -116,12 +117,15 @@ pub fn main() !void {
     try bw.flush(); // don't forget to flush!
 }
 ```
+)
 
 Der Code kann auf den ersten Blick überwältigend wirken, schauen wir ihn uns deswegen Stück für Stück an.
 
+#code(
 ```zig
 const std = @import("std");
 ```
+)
 
 Mit der `@import()` Funktion importieren wir die Standardbibliothek (`std`) und binden diese an eine Konstante mit dem selben Namen.
 Die Standardbibliothek ist eine Ansammlung von nützlichen Funktionen und Datentypen, die während der Entwicklung von Anwendungen
@@ -130,35 +134,45 @@ der Standardbibliothek verwendet, sondern auch um auf Module und andere, zu eine
 
 Nach der Definition der Konstante `std` beginnt die `main` Funktion:
 
+#code(
 ```zig
 pub fn main() !void {
 ```
+)
 
 Unsere `main` Funktion beginnt, wie alle Funktionen, mit `fn` und dem Namen der Funktion. Sie gibt keinen Wert zurück, aus diesem Grund folgt auf die leere Parameterliste `()` der Rückgabetyp `void`. Das Ausrufezeichen `!` weist darauf hin, das die Funktion einen Fehler zurückgeben kann. Fehler in Zig sind eigenständige Werte, die von einer Funktion zurückgegeben werden können und sich semantisch vom eigentlichen Rückgabewert unterscheiden.
 
+#code(
 ```zig
 std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
 ```
+)
 
 Als erstes gibt die `main` Funktion einen String über die Debugausgabe auf der Kommandozeile aus. Die Funktion `print` erwartet dabei einen Format-String, der mit Platzhaltern (z.B. `{s}`) versehen werden kann, sowie eine Liste an Ausdrücken (z.B. `.{"codebase"}`) deren Werte in den String eingefügt werden sollen. Der Platzhalter `{s}` gibt z.B. an, dass an der gegebenen Stelle ein String eingefügt werden soll. Neben `s` gibt es unter anderem noch `d` für Ganzzahlen und `any` für beliebige werte. 
 
+#code(
 ```zig
 const stdout_file = std.io.getStdOut().writer();
 var bw = std.io.bufferedWriter(stdout_file);
 const stdout = bw.writer();
 ```
+)
 
 Via `std.io` können wir mit `getStdIn()`, `getStdOut()` und `getStdErr()` auf `stdin`, `stdout` und `stderr` zugreifen. Alle drei Funktionen geben jeweils eine Objekt vom Typ `File` zurück. Die Funktion `writer()` welche auf der stdout-Datei aufgerufen wird, gibt einen `Writer` zurück. Ein `Writer` ist ein Wrapper um einen beliebiges Datenobjekt (z.B. eine offene Datei, ein Array, ...) und stellt eine standartisiertes Interface zur Verfügung um Daten zu serialisieren. In unserem Fall wird der `stdout_file` Writer wiederum in einen `BufferedWriter` gewrapped, welcher nicht bei jedem einzelnen Schreibvorgang auf die Datei `stdout` zugreift, sondern erst wenn genug Daten geschrieben wurden bzw. wenn die Funktion `flush()` aufgerufen wird. Die Konstante `stdout` ist also ein `Writer` der einen `Writer` umschließt, der eine Datei umschließt, in die schlussendlich geschrieben werden soll.
 
+#code(
 ```zig
 try stdout.print("Run `zig build test` to run the tests.\n", .{});
 ```
+)
 
 Der `BufferedWriter` (`stdout`) wird verwendet um (indirekt) den String "Run zig build test to run the tests." nach stdout (standardmäßig die Kommandozeile) zu schreiben. Da diese Schreiboperation fehlschlagen kann wird vor den Ausdruck ein `try` gestellt. Damit wird ein potenzieller Fehler "nach oben" propagiert, was im gegebenen Fall zu einem Programmabsturz führen würde, da `main` keine Funktion über sich besitzt. Als Alternative könnte mit einem `catch` Block der Fehler explizit abgefangen werden.
 
+#code(
 ```zig
 try bw.flush();
 ```
+)
 
 Um sicher zu gehen, dass auch alle Daten aus dem `BufferedWriter` tatsächlich geschrieben wurden, muss schlussendlich `flush()` aufgerufen werden.
 
@@ -176,8 +190,8 @@ Im gegebenen Beispiel wurden zwei Schritte ausgeführt. Zuerst wurde der Zig-Com
 
 Zig's Grammatik ist sehr überschaubar und damit leicht zu erlernen. Diejenigen mit Erfahrung in anderen C ähnlichen Programmiersprachen wie C, C++, Java oder Rust sollten sich direkt Zuhause fühlen. Die unterhalb abgebildete Funktion berechnet den größten gemeinsamer Teiler (greatest common divisor) zweier Zahlen.
 
+#code(
 ```zig
-// chapter01/gcd.zig
 fn gcd(n: u64, m: u64) u64 {
     return if (n == 0)
         m
@@ -188,7 +202,8 @@ fn gcd(n: u64, m: u64) u64 {
     else
         gcd(m, n % m);
 }
-```
+```,
+caption: [chapter01/gcd.zig])
 
 Das `fn` Schlüsselwort markiert den Beginn einer Funktion. Im gegebenen Beispiel definieren wir eine Funktion mit dem Name `gcd`, welche zwei Argumente `m` und `n`, jeweils vom Typ `u64`, erwartet. Nach der Liste an Argumenten in runden Klammern folgt der Typ des erwarteten Rückgabewertes. Da die Funktion den größten gemeinsamen Teiler zweier `u64` Ganzzahlen berechnet ist auch der Rückgabewert vom Typ `u64`. Der Körper der Funktion wird in geschweifte Klammern gefasst.
 
@@ -212,12 +227,13 @@ Das vollständige Programm finden Sie im zugehörigen Github-Rerpository. Mittel
 
 Wie von einer modernen Programmiersprache zu erwarten bietet Zig von Haus aus Unterstützung für Tests. Tests beginnen mit dem Schlüsselwort `test`, gefolgt von einem String der den Test bezeichnet. In geschweiften Klammern folgt der Test-Block.
 
+#code(
 ```zig
-// chapter01/gcd.zig
 test "assert that the gcd of 21 and 4 is 1" {
     try std.testing.expectEqual(@as(u64, 1), gcd(21, 4));
 }
-```
+```,
+caption: [chapter01/gcd.zig])
 
 Die Standardbibliothek bietet unter `std.testing` eine ganze Reihe an Testfunktionen für verschiedene Datentypen und Situationen. Im obigen Beispiel verwenden wir `ExpectEqual`, welche als erstes Argument den erwarteten Wert erhält und als zweites Argument das Resultat eines Aufrufs von `gcd`. Die Funktion überprüft beide Werte auf ihre Gleichheit und gibt im Fehlerfall einen `error` zurück. Dieser Fehler kann mittels `try` propagiert werden, wodurch der Testrunner im obigen Beispiel erkennt, dass der Test fehlgeschlagen ist.
 
@@ -228,6 +244,7 @@ All 1 tests passed.
 
 Innerhalb einer Datei sind Definitionen auf oberster Ebene (top-level definitions) unabhängig von ihrer Reihenfolge, was die Definition von Tests mit einschließt. Damit können Tests an einer beliebigen Stelle definiert werden, darunter direkt neben der zu testenden Funktion oder am Ende einer Datei. Der Zig-Test-Runner sammelt automatisch alle definierten Tests und führt dies beim Aufruf von *`zig test`* aus. Worauf Sie jedoch achten müssen ist, dass Sie ausgehend von der Wurzel-Datei (in den meisten Fällen _src/root.zig_), die konzeptionell den Eintritspunkt für den Compiler in ihr Programm oder Ihre Bibliothek darstellt, Zig mitteilen müssen in welchen Dateien zusätzlich nach Tests gesucht werden soll. Dies bewerkstelligen Sie, indem Sie die entsprechende Datei innerhalb eines Tests importieren.
 
+#code(
 ```zig
 const foo = @import("foo.zig");
 
@@ -235,6 +252,7 @@ test "main tests" {
     _ = foo; // Tell test runner to also look in foo for tests
 }
 ``` 
+)
 
 == Comptime
 
@@ -242,15 +260,17 @@ Die meisten Sprachen erlauben eine Form von Metaprogrammierung, d.h. das Schreib
 
 Ein Aufgabe für die Metaprogrammierung sehr gut geeignet ist, ist die Implementierung von Container-Typen wie etwa `std.ArrayList`. Eine `ArrayList` ist ein Liste von Elementen eines beliebigen Typen, die eine Menge an Standardfunktionen bereitstellt um die Liste zu manipulieren. Nun wäre es sehr aufwändig die `ArrayList` für jeden Typen einzeln implementieren zu müssen. Aus diesem Grund ist `ArrayList` als Funktion implementiert, welche zur Compilezeit einen beliebigen Typen übergeben bekommt auf Basis dessen einen `ArrayList`-Typ generiert. 
 
+#code(
 ```zig
 var list = std.ArrayList(u8).init(allocator);
 try list.append(0x00);
 ```
+)
 
 Der Funktionsaufruf `ArrayList(u8)` wird zur Compilezeit ausgewertet und gibt einen neuen Listen-Typen zurück, mit dem sich eine Liste an `u8` Objekten managen lassen. Auf diesem Typ wird `init()` aufgerufen um eine neu Instanz des Listen-Typs zu erzeugen. Mit der Funktion `append()` kann z.B., ein Element an das Ende der Liste angehängt werden. Eine stark simplifizierte Version von `ArrayList` könnte wie folgt aussehen.
 
-```zig
-// chapter01/my-arraylit.zig
+#code(
+```zig 
 const std = @import("std");
 
 // Die Funktion erwartet als Compilezeitargument einen Typen `T`
@@ -302,7 +322,9 @@ pub fn main() !void {
 
     std.log.info("{s}", .{std.fmt.fmtSliceHexLower(list.items[0..])});
 }
-```
+```,
+caption: [chapter01/my-arraylit.zig],
+)
 
 Mit dem `comptime` Keyword sagen wir dem Compiler, dass das Argument `T` zur Compilezeit erwartet wird. Beim Aufruf von `MyArrayList(u8)` wertet der Compiler die Funktion aus und generiert dabei einen neuen Typen. Das praktische ist, dass wir `MyArrayList` nur einmal implementieren müssen und diese im Anschluss mit einem beliebigen Typen verwenden können. 
 
@@ -312,8 +334,8 @@ Structs die mit `init()` initialisiert und mit `deinit()` deinitialisiert werden
 
 Ein weiterer Anwendungsfall bei dem Comptime zum Einsatz kommen kann ist die Implementierung von Parsern. Ein Beispiel hierfür ist der Json-Parser der Standardbibliothek (`std.json`), welcher dazu verwendet werden kann um Zig-Typen als Json zu serialisieren und umgekehrt #footnote[Die JavaScript Object Notation (JSON) ist eines der gängigsten Datenformate und wird unter anderem zur Übermittlung von Daten im Web verwendet (#link("https://en.wikipedia.org/wiki/JSON")).].
 
-```zig
-// chapter01/reflection.zig
+#code(
+```zig 
 const std = @import("std");
 
 const MyStruct = struct {
@@ -343,7 +365,8 @@ pub fn main() void {
 
     std.debug.print("{s}", .{if (isStruct(s)) "is a struct!" else "is not a struct!"});
 }
-```
+```,
+caption: [chapter01/reflection.zig])
 
 Anstelle eines Typen kann `anytype` für Parameter verwendet werden. In diesem Fall wird der Typ des Parameters, beim Aufruf der Funktion, abgeleitet. Zig erlaubt Reflexion (type reflection). Unter anderem erlaubt Zig die Abfrage von (Typ-)Informationen über ein Objekt. Funktionen denen ein `@` vorangestellt sind heißen Builtin-Function (eingebaute Funktion) und werden direkt vom Compiler bereitgestellt, d.h., sie können überall in Programmen, ohne Einbindung der Standardbibliothek, verwendet werden.
 
@@ -372,8 +395,8 @@ Wir werden uns in einem späteren Kapitel noch genauer mit Kryptographie auseina
 - `XChaCha20`: Zur Verschlüsselung der Daten wird die "Nonce-eXtended" Version der `ChaCha20` Stromchiffre verwendet. `XChaCha20` erwartet einen Schlüssel und eine Nonce (Number used once: Eine Byte-Sequenz die nur einmal für eine Verschlüsselung verwendet werden darf) und leitet daraus eine Schlüsselsequenz ab, die mit dem Klartext XORed wird. Die eXtended Version verwendet dabei eine 192-Bit Nonce anstelle einer 96-Bit Nonce, was es deutlich sicherer macht diese zufällig mittels eines (kryptographisch sicheren) Zufallszahlengenerators zu erzeugen. Dieser Teil des Algorithmus ist für die Vertraulichkeit der Daten verantwortlich.
 - `Poly1305`: `Poly1305` ist ein Hash, der zur Erzeugung von (one-time) Message Authentication Codes (MAC) verwendet werden kann. MACs sind sogenannte Keyed-Hashfunktionen, bei denen in einen Hash (keine Sorge, wir werden uns noch näher damit beschäftigen) ein geheimer Schlüssel integriert wird. Die Hashsumme wird dabei in unserem Beispiel über den Ciphertext, d.h. den Verschlüsselten Text, gebildet #footnote[Dies wird als Encrypt-than-Mac bezeichnet.]. Durch den Einbezug eines Schlüssels kann nicht nur überprüft werden, dass die Integrität der Datei nicht verletzt wurde (sie wurde nicht verändert), sondern es kann auch sichergestellt werden, dass die MAC von Ihnen generiert wurde, da nur Sie als Nutzer der Anwendung den geheimen Schlüssel kennen.
 
-```zig
-// chapter01/encrypt.zig
+#code(
+```zig 
 const std = @import("std");
 
 const argon2 = std.crypto.pwhash.argon2;
@@ -526,7 +549,8 @@ pub fn main() !void {
         try std.fmt.format(stdout.writer(), "{s}", .{pt});
     }
 }
-```
+```,
+caption: [chapter01/encrypt.zig])
 
 In diesem Beispiel laufen eine Vielzahl von Konzepten zusammen, die sie im Laufen diese Buches noch häufiger antreffen werden. Unsere Anwendung erwartet Daten, z.B. den Inhalt einer Datei, über `stdin`, sowie zwei Kommandozeilenargumente: `--password` und `--encrypt` bzw. `--decrypt`. Basierend auf diesen Argumenten werden die übergebenen Daten entweder verschlüsselt oder entschlüsselt und nach `stdout` geschrieben.
 
@@ -588,8 +612,8 @@ info: see `zig build --help` for a menu of options
 
 Danach fügen Sie `gtk4` als Bibliothek zu Ihrer Anwendung hinzu. Hierfür öffnen Sie `build.zig` mit einem Texteditor und erweitern die Datei um die folgenden Zeilen:
 
-```zig
-// chapter01/gui/build.zig
+#code(
+```zig 
 //...
 const exe = b.addExecutable(.{
     //...
@@ -598,7 +622,8 @@ const exe = b.addExecutable(.{
 exe.linkLibC();
 exe.linkSystemLibrary("gtk4"); 
 //...
-```
+```,
+caption: [chapter01/gui/build.zig])
 
 Stellen Sie sicher, dass Sie die Developer-Bibliothek von GTK4 auf Ihrem System installiert haben. Unter Debian/Ubuntu können Sie diese über den APT-Paket-Manager installieren.
 
@@ -608,8 +633,8 @@ sudo apt install libgtk-4-dev
 
 Führen Sie danach *`zig build`* aus um zu überprüfen, dass Zig die benötigte Bibliothek auf Ihrem System findet. Erzeugen Sie als nächstes die Datei _src/gtk.zig_ und fügen Sie den Folgenden Code hinzu:
 
-```zig
-// chapter01/gui/src/gtk.zig
+#code(
+```zig 
 pub usingnamespace @cImport({
     @cInclude("gtk/gtk.h");
 });
@@ -636,7 +661,8 @@ pub fn z_signal_connect(
         flags.*,
     );
 }
-```
+```,
+caption: [chapter01/gui/src/gtk.zig])
 
 Zig ist zwar ziemlich gut darin mit C zu integrieren, jedoch werden Sie von Zeit zu Zeit noch auf Probleme stoßen. In den meisten Fällen lässt sich dies jedoch relativ einfach lösen. 
 Innerhalb von `src/gtk.zig` inkludieren wir zuerst die GTK4 Header-Datei `gtk.h`. Wie Ihnen vielleicht aufgefallen ist, haben wir an keiner Stelle innerhalb von `build.zig` auf diese Datei verwiesen. Zig reicht es in den aller meisten Fällen aus, wenn Sie die Bibliothek benennen die Sie einbinden möchten und fügt die benötigten Pfade automatisch hinzu. 
@@ -647,8 +673,8 @@ Eine in `gtk.h` deklarierte Funktion, die wir später noch benötigen, ist `g_si
 
 Nun haben wir alles vorbereitet und können uns um die eigentliche Anwendung kümmern. Ersetzen Sie den Code in `src/main.zig` mit dem folgenden Programm:
 
-```zig
-// chapter01/gui/src/main.zig
+#code(
+```zig 
 const std = @import("std");
 const gtk = @import("gtk.zig");
 
@@ -685,7 +711,8 @@ pub fn main() !void {
         null,
     );
 }
-```
+```,
+caption: [chapter01/gui/src/main.zig])
 
 Ganz oben importieren wir die Standardbibliothek, als auch die Datei `gtk.zig` unter dem Namen `gtk`. Danach folgt die Funktion `onActivate`, welche verwendet wird um ein GTK-Fenster zu erzeugen. Schauen wir uns aber zuerst die `main` Funktion an.
 
@@ -706,12 +733,13 @@ Nur ein leeres Fenster ist etwas langweilig, deshalb fügen wir als nächstes no
 
 Zuerst muss ein Callback definiert werden, der aufgerufen wird sobald der Button vom Nutzer gedrückt wird.
 
-```zig
-// chapter01/gui/src/main.zig
+#code(
+```zig 
 fn onButtonClicked(_: *gtk.GtkWidget, _: gtk.gpointer) void {
     std.log.info("Hello, World!", .{});
 }
-```
+```,
+caption: [chapter01/gui/src/main.zig])
 
 Callbacks in GTK erwarten zwei Argumente, einen Zeiger auf das Widget (z.B. der Button) welches den Callback ausgelöst hat und optional einen Zeiger auf Daten, die an die Funktion übergeben werden sollen. Da wir weder das Widget noch Daten benötigen, werden die Parameternamen durch `_` ersetzt. Damit stellen wir den Compiler zufrieden der erwartet, dass alle deklarierten Variablen verwendet werden, Parameter eingeschlossen.
 
@@ -719,8 +747,8 @@ Allgemein setzt sich eine GTK Anwendung aus Widgets (Bausteinen) zusammen. Alles
 
 Fügen Sie den folgenden Code zwischen dem Aufruf von `gtk_window_set_default_size` und `z_signal_connect` ein.
 
-```zig
-// chapter01/gui/src/main.zig
+#code(
+```zig 
 const button = gtk.gtk_button_new_with_label("Click Me!");
 gtk.gtk_window_set_child(
     @as(*gtk.GtkWindow, @ptrCast(window)),
@@ -732,7 +760,8 @@ _ = gtk.z_signal_connect(
     @as(gtk.GCallback, @ptrCast(&onButtonClicked)),
     null,
 );
-```
+```,
+caption: [chapter01/gui/src/main.zig])
 
 Da alle Bausteine als `GtkWidget` verwendet werden können ist es teilweise nötig einzelne Zeiger auf den richtigen, von einer Funktion erwarteten, Parametertypen zu casten. Der Ausdruck `@as(*gtk.GtkWindow, @ptrCast(window))` bedeutet zum Beispiel: betrachte den Zeiger `window` als einen Zeiger zu einem `GtkWindow`.
 
@@ -751,4 +780,10 @@ Beim clicken des Buttons sollte _"Hello, World!"_ auf der Kommandozeile ausgegeb
 Herzlichen Glückwunsch! Sie haben ihre erste graphische Benutzerobefläche in Zig programmiert.
 
 == Zig als C Build-System
+
+Zig integriert nicht nur hervorragend mit C sondern kann auch als Build-System für C und C++ verwendet werden. Damit stellt Zig unter anderem eine Alternative zu Make oder CMake dar.
+
+Genau wie für Zig Projekte können Sie auch zu Ihren C und C++ Projekten einen `build.zig` Datei hinzufügen, welche den Build-Prozess beschreibt. Außerdem macht es Sinn eine `build.zig.zon` Datei hinzuzufügen, die zusätzliche Metadaten zu Ihrem Projekt liefert.
+
+
 

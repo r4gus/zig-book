@@ -55,6 +55,15 @@
     margin: (bottom: 1.75cm, top: 2.25cm),
   )
 
+  // Display inline code in a small box
+  // that retains the correct baseline.
+  show raw.where(block: false): box.with(
+    fill: luma(240),
+    inset: (x: 3pt, y: 0pt),
+    outset: (y: 3pt),
+    radius: 2pt,
+  )
+
   // The first page.
   page(
     margin: (top: 5cm),
