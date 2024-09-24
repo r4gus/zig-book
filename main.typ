@@ -16,5 +16,4 @@
 #include "chapters/chapter01.typ"
 #include "chapters/chapter02.typ"
 #include "chapters/chapter03.typ"
-#include "chapters/chapter09.typ"
-#include "chapters/chapter10.typ"
+#include "chapters/chapter04.typ"

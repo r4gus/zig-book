@@ -583,6 +583,45 @@ Die Funktion `std.mem.eql` überprüft ob die zwei gegebenen Strings, bezogen au
 
 Im Gegensatz zu C verhindert Zig, dass numerische Werte als Booleans verwendet werden #footnote[In C ist der Wert `0` äquivalent zu `False` und alle verbleibenden Werte äquivalent zu `True`.].
 
+== defer
+
+Mit dem `defer` Schlüsselwort können Ausdrücke und Blöcke markiert werden, die beim Verlassen eines Blocks ausgeführt werden sollen. Solche `defer`-Ausdrücke und -Blöcke werden in der umgekehrten Reihenfolge ausgeführt, in welcher sie definiert wurden.
+
+#code(
+```zig
+const std = @import("std");
+const print = std.debug.print;
+
+fn myDefer() void {
+    defer {
+        print("Wird als zweites ausgeführt\n", .{});
+    }
+
+    defer print("Wird als erstes ausgeführt\n", .{});
+
+    if (false) {
+        defer print("Wird nie ausgeführt\n", .{});
+    }
+}
+
+test "defer test #1" {
+    myDefer();
+}
+```,
+caption: [chapter02/defer.zig])
+
+`defer`s werden dabei nur ausgeführt, wenn Sie beim Ausführen eines Blocks auch erreicht wurden. Im obigen Beispiel kommt zuerst ein `defer`-Block vor, gefolgt von einem `defer`-Ausdruck. Da `defer`s in umgekehrter Reihenfolge ausgeführt werden, wird beim Verlassen der Funktion zuerst "_Wird als erstes ausgeführt_" auf der Kommandozeile ausgegeben, gefolgt von "_Wird als zweites ausgeführt_". "_Wird nie ausgeführt_" wird nicht ausgegeben, da die If-Bedingung immer `false` ist und somit der If-Block nie ausgeführt wird.
+
+`defer`s eignen sich besonders gut zum aufräumen von Ressourcen. Ein Beispiel hierfür ist die Deallokation von dynamisch alloziertem Speicher. Es ist gängige Praxis, dass auf die dynamische Allokation von Speicher ein `defer` folgt, welches den Speicher wieder frei gibt, sollte dieser nach dem Verlassen des umschließenden Blocks nicht mehr benötigt werden.
+
+#code(
+```zig
+var mem = try std.heap.c_allocator.alloc(T: u8, n: 16);
+defer std.heap.c_allocator.free(mem);
+// do something...
+```
+)
+
 == Optionals
 
 In Situationen bei denen eine Wert fehlen kann, können Optionals verwendet werden. Ein Optional repräsentiert zwei mögliche Zustände: Entweder es ist ein Wert vorhanden oder es ist kein Wert vorhanden. Dies ist nicht zu verwechseln mit undefinierten Werten, die bei der Verwendung von `undefined` vorkommen!
@@ -919,3 +958,155 @@ error: end index 20 out of bounds for array of length 15 +1 (sentinel)
     std.log.info("{s}", .{a[1..n]});
 ```
 
+== Enums
+
+== Errors
+
+Während der Ausführung von Zig-Code kann ein Programm auf Fehler zur Laufzeit stoßen. Dabei kann es sich zum Beispiel um eine fehlende Datei handeln, die nicht geöffnet werde kann.
+
+Im Gegensatz zu Optionals, welche die Abwesenheit eines Wertes kommunizieren können, geben Fehler mehr Aufschluss über den Grund, warum der Aufruf einer Funktion fehlgeschlagen ist. Außerdem unterstützt Zig das Propagieren von Fehlern.
+
+Zig betrachtet Errors als Werte, die in einem Error-Set zusammengefasst werden. Ein Error-Set ist vergleichbar zu einem Enum, wobei jedem Error-Bezeichner ein eindeutiger ganzzahliger Wert größer 0 zugewiesen wird #footnote[Standardmäßig ist der einem Error zugrunde liegende Integer-Typ ein `u16`.]. Wird ein Error-Bezeichner (zum Beispiel `error.OutOfMemory`) mehrfach definiert, so wird diesem immer der selbe numerische Wert zugewiesen.
+
+Error-Sets können mit dem `error` Schlüsselwort definiert werden. Ein Error-Typ wird deklariert, indem dem Basistypen der Name des zugehörigen Error-Sets, gefolgt von einem `!`, vorangestellt wird. Angenommen eine Funktion gibt potenziell einen Fehler aus dem Error-Set `MyErrors` oder `void` (kein Rückgabewert) zurück, dann kann der Rückgabewert der Funktion wie folgt geschrieben werden: `MyErrors!void`. Um einen Error zurück zu geben kann der entsprechende Error-Wert, genau wie andere Rückgabewerte, mit `return` an die aufrufende Funktion gereicht werden.
+
+#code(
+```zig
+const std = @import("std");
+
+const MyErrors = error{
+    IsNotEight,
+};
+
+/// Check if the given number is eight.
+/// Returns an error if `n` is not equal 8!
+fn checkNumber(n: u8) MyErrors!void {
+    if (n != 8) return MyErrors.IsNotEight;
+}
+
+test "Error test #1" {
+    try std.testing.expectError(MyErrors.IsNotEight, checkNumber(7));
+}
+```,
+caption: [chapter02/errors.zig])
+
+Da den gleichen Error-Bezeichnern der gleiche numerische Wert zugewiesen wird, kann im obigen Beispiel anstelle von `MyErrors.IsNotEight` auch `error.IsNotEight` zurückgegeben werden. Zig erlaubt mit der Syntax `error.<NameDesErrors>` die Definition von Errors innerhalb eines impliziten Error-Sets. Dies ist die Kurzform für `(error{<NameDesErrors>}).<NameDesErrors>`.
+
+#code(
+```zig
+fn checkNumber(n: u8) MyErrors!void {
+    if (n != 8) return error.IsNotEight;
+}
+```
+)
+
+=== Error-Set Coercion
+
+Angenommen es existieren zwei Error-Sets, wobei das eine Error-Set eine Teilmenge des Anderen darstellt. In einem solchen Fall erlaubt Zig die Coercion, das heißt das Umwandeln, von der Tielmenge in die Obermenge.
+
+#code(
+```zig
+const FileOpenError = error{
+    AccessDenied,
+    OutOfMemory,
+    FileNotFound,
+};
+
+const AllocationError = error{
+    OutOfMemory,
+};
+
+fn coerce(err: AllocationError) FileOpenError {
+    return err;
+}
+
+test "Error-Set Coercion" {
+    try std.testing.expect(FileOpenError.OutOfMemory == coerce(AllocationError.OutOfMemory));
+}
+```,
+caption: [chapter02/errors.zig])
+
+Was jedoch nicht funktioniert ist die Umwandlung einer Obermenge in eine Teilmenge!
+
+=== Globales Error-Set
+
+Zig erlaubt es das explizite Error-Set links vom `!` wegzulassen, zum Beispiel `!void`. In diesem Fall ist das Error-Set implizit `anyerror`, das globalen Error-Set, dem alle Errors der gesamten Compilation-Unit angehören. Jedes Error-Set kann in `anyerror` umgewandelt werden. Außerdem kann eine Element aus dem globalen Error-Set explizit in ein nicht globales Error-Set ge-castet werden.
+
+#code(
+```zig
+fn checkNumber(n: u8) !void {
+    if (n != 8) return error.IsNotEight;
+}
+```
+)
+
+Im obigen Beispiel wird der Rückgabewert automatisch in einen Wert vom Typ `anyerror!void` umgewandelt.
+
+=== catch
+
+Mit `catch` können Errors, die von einer Funktion zurückgegeben werden, abgefangen und entsprechend behandelt werden.
+
+#code(
+```zig
+pub fn main() void {
+    const n = 7;
+    checkNumber(n) catch |e| {
+        std.log.err("The number {d} is not equal 8: {any}", .{ n, e });
+    };
+}
+```,
+caption: [chapter02/errors.zig])
+
+Das `catch` folgt direkt hinter dem Aufruf der Funktion. Optional kann der Fehler-Wert an eine Variable (im obigen Fall `e`) gebunden werden. Der `catch`-Block (eingegrenzt durch geschweifte Klammern `{}`) wird nur ausgeführt, falls die Funktion einen Error als Rückgabewert liefert.
+
+`catch` eignet sich ebenfalls um im Fehlerfall einen Default-Wert bereitzustellen.
+
+#code(
+```zig
+test "Default-Wert" {
+    const n = std.fmt.parseInt(u64, "0xdeaX", 16) catch 16;
+    try std.testing.expect(n == 16);
+}
+```,
+caption: [chapter02/errors.zig])
+
+In diesem Beispiel ist `n` entweder gleich dem entpackten Rückgabewert von `parseInt()` oder, falls `parseInt()` einen Error zurück gibt, 16. Wie zu sehen ist muss nicht zwangsläufig ein Block auf `catch` folgen, genauso zulässig ist ein Ausdruck. Der entpackte Rückgabewert der Funktion und der Ausdruck rechts vom `catch` müssen den selben Typ besitzen (in diesem Beispiel `u64`). 
+
+Alternativ kann auch ein Block mit einem frei wählbaren Bezeichner (zum Beispiel `blk`) verwendet werden. Der Bezeichner muss dabei die selben Anforderungen wie ein Variablen-Name erfüllen.
+
+#code(
+```zig
+const n = std.fmt.parseInt(u64, "0xdeaX", 16) catch blk: {
+    break :blk 16; 
+}
+try std.testing.expect(n == 16);
+```
+)
+
+Mittels `break` kann der Default-Wert `16` in den umschließenden Block gereicht werden, wo er an die Konstante `n` gebunden wird. Das Literal wird dabei automatisch vom Typ `comptime_int` in einen `u64` umgewandelt.
+
+=== try
+
+In vielen Fällen reicht es aus, beim Auftreten eines Errors, selbst einen Error an die aufrufende Funktion zurückzugeben. Dies wird als Fehler-Propagierung bezeichnet und kann in Zig durch die Verwendung von `try` umgesetzt werden. Hierzu wird vor den Aufruf einer Funktion, die einen Fehler-Typen als Rückgabetyp besitzt, das Schlüsselwort `try` gesetzt.
+
+#code(
+```zig
+fn foo(str: []const u8) !void {
+    const n = try std.fmt.parseInt(u64, str, 16);
+    _ = n;
+}
+```
+)
+
+Das Schlüsselwort `try` evaluiert den zugehörigen Ausdruck und kehrt im Fehlerfall mit dem selben Error aus der Funktion zurück. Andernfalls wird der Rückgabewert der aufgerufenen Funktion entpackt.
+
+Dies ist die Kurzform für den folgenden Code:
+
+#code(
+```zig
+fn foo(str: []const u8) !void {
+    const n = std.fmt.parseInt(u64, str, 16) catch |e| return e;
+    _ = n;
+}
+```
+)

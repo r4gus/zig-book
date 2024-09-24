@@ -21,11 +21,9 @@
     block(
         [
             #if caption != none {
-                align(right)[#caption]
+                align(right)[#move(dy: 10pt, caption)]
             }
-            #line(length: 100%)
             #code-block
-            #line(length: 100%)
         ]
     )
 }

@@ -64,6 +64,15 @@
     radius: 2pt,
   )
 
+    // Display block code in a larger block
+    // with more padding.
+    show raw.where(block: true): block.with(
+      fill: luma(250),
+      inset: 12pt,
+      radius: 0pt,
+      width: 100%,
+    )
+
   // The first page.
   page(
     margin: (top: 5cm),
