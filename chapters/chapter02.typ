@@ -15,7 +15,7 @@ Weiterhin unterstützt Zig optionale Typen, welche die Abwesenheit eines Wertes 
 
 In Zig sind Fehler ebenfalls Werte, das heißt anstatt eine Exception zu werfen können Funktionen einen Fehler-Wert an die Aufrufende Funktion zurückgeben, welche potenzielle Fehler behandeln muss bevor auf den eigentlichen Rückgabewert zugegriffen werden kann.
 
-== Kontanten und Variablen
+== Konstanten und Variablen
 
 Konstanten und Variablen bestehen aus einem Namen in Snake-Case (`buffer` oder `private_key`) und einem Typen (zum Beispiel `u8` oder `[]const u8`). Sie werden verwendet um Werte vom entsprechenden Typ zu binden (zum Beispiel `13` oder `"Hello, World!"`). Konstanten können nach ihrer Initialisierung nicht mehr neu zugewiesen werden.
 
@@ -877,7 +877,7 @@ info: 5
 
 === Slices
 
-Slices `[]T` werden ohne Angabe einer Länge geschrieben und repräsentieren eine lineare Sequenz an Werten. Konzeptionell ist ein Slice eine Zeiger vom Typ `std.builtin.Type.Pointer`. Schaut man sich die Definition von `Slice` in _zig/src/mutable\_value.zig_ #footnote[https://github.com/ziglang/zig/blob/624fa8523a2c4158ddc9fce231181a9e8583a633/src/mutable_value.zig] an, so sieht man, dass ein Slice durch einen Zeiger (`ptr`) auf den Beginn des referenzierten Speicherbereichs und eine Länge (`len`) beschrieben wird.
+Slices `[]T` werden ohne Angabe einer Länge geschrieben und repräsentieren eine lineare Sequenz an Werten. Konzeptionell ist ein Slice eine Zeiger vom Typ `std.builtin.Type.Pointer`. Schaut man sich die Definition von `Slice` in _zig/src/mutable\_value.zig_ #footnote[https://github.com/ziglang/zig/blob/624fa8523a2c4158ddc9fce231181a9e8583a633/src/mutable_value.zig] an, so sieht man, dass ein Slice durch einen Zeiger (`ptr`), der auf den Beginn des referenzierten Speicherbereichs zeigt, sowie eine Länge (`len`) beschrieben wird.
 
 #code(
 ```zig 
@@ -932,11 +932,11 @@ Mithilfe des `[]` Operators können Slices für einen bestehenden Speicherbereic
 ```zig
 const name = "David";
 // Die ersten drei Buchstaben
-std.log.info("{s}", .{name[0..3]});
+try std.testing.expectEqualStrings("Dav", name[0..3]);
 // Die letzten zwei Buchstaben
-std.log.info("{s}", .{name[3..]});
+try std.testing.expectEqualStrings("id", name[3..]);
 // Die mittleren drei Buchstaben
-std.log.info("{s}", .{name[1..4]});
+try std.testing.expectEqualStrings("avi", name[1..4]);
 ```
 )
 
@@ -958,7 +958,37 @@ error: end index 20 out of bounds for array of length 15 +1 (sentinel)
     std.log.info("{s}", .{a[1..n]});
 ```
 
-== Enums
+=== Sentinel-Terminierte Slices
+
+Slices definieren einen Speicherbereich, durch einen Zeiger und eine Länge. Dadurch wird der Speicherbereich explizit eingegrenzt, was in vielen Fällen die aus C bekannten NULL-Terminatoren überflüssig macht. Jedoch unterstützt Zig auch NULL-terminierte Strings.
+
+Allgemein werden Slices, deren Ende durch einen bestimmten Wert begrenzt wird (zum Beispiel ein NULL-Byte), als sentinel-terminated Slices bezeichnet. Der Sentinel (Wächter) ist eine vordefinierter Wert der das Slice abschließt.
+
+Sentinel-terminierte Slices werden mit der `[:x]T` Syntax definiert und besitzen wie auch alle anderen Slices eine Länge, auf die über das `.len` Feld zugegriffen werden kann. Die Länge ist dabei die Länge des Slices ohne den Sentinel-Wert!
+
+#code(
+```zig
+const std = @import("std");
+
+test "slice test" {
+    const name: [:0]const u8 = "Pierre";
+
+    try std.testing.expect(name.len == 5);
+    try std.testing.expect(name[6] == 0);
+}
+```
+)
+
+Sentinel-terminierte Slices können auch mit der `data[start..end :x]` Syntax erzeugt werden, wobei `data` eine Zeiger auf mehrere Werte, ein Array oder ein Slice seien muss. Der Wert `x` ist der Sentinel.
+
+#code(
+```zig
+const arr = [_]u8{'h', 'e', 'l', 'l', 'o', 0, 'h', 'e', 'l', 'l', 'o', 0};
+const s = arr[0..5 :0];
+```
+)
+
+Wichtig dabei ist, dass das mit `data[start..end :x]` erzeugte Slice auch tatsächlich vom angegebenen Sentinel terminiert wird! Sollte dies nicht der Fall sein, führt dies je zu undefiniertem Verhalten. Je nach gewählter Optimierung führt dies im besten Fall zur einer Panic zur Laufzeit, die den Prozess vorzeitig beendet.
 
 == Errors
 
@@ -1042,6 +1072,10 @@ fn checkNumber(n: u8) !void {
 
 Im obigen Beispiel wird der Rückgabewert automatisch in einen Wert vom Typ `anyerror!void` umgewandelt.
 
+#tip-box([
+    In vielen Fällen ist es praktisch das Error-Set einer Funktion von Zig ableiten zu lassen. Je nach Anwendungsfall kann dies jedoch auch Nachteile mit sich bringen. Vor allem bei der Entwicklung von Modulen, die mit anderen Programmieren geteilt werden, sollten Sie sich angewöhnen explizite Error-Sets zu verwenden.
+])
+
 === catch
 
 Mit `catch` können Errors, die von einer Funktion zurückgegeben werden, abgefangen und entsprechend behandelt werden.
@@ -1108,5 +1142,53 @@ fn foo(str: []const u8) !void {
     const n = std.fmt.parseInt(u64, str, 16) catch |e| return e;
     _ = n;
 }
+```
+)
+
+=== errdefer
+
+Es gibt Situationen, bei denen Code nur im Fehlerfall ausgeführt werden soll, zum Beispiel um Speicher zu de-allozieren, der nicht mehr benötigt wird. Für solche Fälle kann `errdefer` verwendet werden, das die gleichen Eigenschaften wie `defer` aufweist, mit dem großen Unterschied das `errdefer` nur ausgeführt wird, sollte die Funktion einen Fehler zurückgeben.
+
+#code(
+```zig
+fn alwaysFail(a: std.mem.Allocator) ![]const u8 {
+    const mem = try a.alloc(u8, 13); 
+    errdefer a.free(mem);
+
+    @memcpy(mem, "Hello, World!"); 
+
+    if (std.mem.eql(u8, "Hello", mem[0..5])) {
+        // Weil der Fehler `HelloError` zurückgegeben wird,
+        // wird auch der von `mem` referenzierte Speicher
+        // freigegeben.
+        return error.HelloError;
+    }
+
+    return mem;
+}
+```
+)
+
+Das praktische ist, dass durch `errdefer` die Allokation und Deallokation sehr nahe beieinander liegen können. Dies macht es einfacher sicherzustellen, dass im Fehlerfall kein Speicherleck (engl. Memory-Leak) entsteht.
+
+#tip-box([
+    Sowohl `defer` als auch `errdefer` beziehen sich auf den umschließenden Block. Dadurch wird `errdefer` nicht ausgeführt, sollte der Error außerhalb des Blocks zurückgegeben werden!
+])
+
+=== Error-Sets zusammenführen
+
+Errors-Sets können mit dem `||`-Operator zusammengeführt werden.
+
+#code(
+```zig
+const A = error{
+    Foo,
+};
+
+const B = error{
+    Bar,
+};
+
+const AB = A || B;
 ```
 )

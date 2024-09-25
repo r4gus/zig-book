@@ -73,16 +73,6 @@ Ein sentinel-terminated Pointer wird durch einen Typ `[*:x]T` beschrieben, wobei
     Im Allgemeinen werden in Zig Slices, gegenüber sentinel-terminated Pointern, präferiert. Der Grund hierfür ist, dass Slices über Bounds-Checking verfügen und so gängige Speicherfehler abgefangen werden können. Es gibt jedoch auch Situationen, in denen many-item Pointer bzw. sentinel-terminated Pointer explizit benötigt werden, z.B. beim Arbeiten mit C Code. Auf die Interoperabilität zwischen Zig und C wird in einem späteren Kapitel noch näher eingegangen.
 ])
 
-== Container
-
-Jedes syntaktische Konstruct in Zig, welches als Namensraum dient und Variablen- oder Funktionsdeklaraionen umschließt, wird als Container bezeichnet. Weiterhin können Container selbst Typdeklarationen sein, welche instantiiert werden können. Dazu zählen `struct`s, `enum`s, `union`s und sogar Sourcedateien mit der Dateiendung _.zig_.
-
-Ein Merkmal welches Container von Blöcken unterscheidet ist, dass Container keine Ausdrücke enthalten, obwohl sowohl Container als auch Blöcke, mit der Ausnahme von Sourcedateien, in geschweifte Klammern (`{}`) gefasst werden.
-
-#tip-box([
-    In Zig ist die Definition von Structs, Enums und Unions ein Ausdruck, d.h. Definitionen müssen mit einem Semikolon `;` abgeschlossen werden (z.B. `struct {};`).
-])
-
 === Struct
 
 Ein Struct erlaubt die Definition eines neuen Datentyp der eine Menge an Werten, von einem bestimmten Typ, zusammenfasst. Structs werden mit dem `struct` Schlüsselwort deklariert. Der Inhalt eines Structs wird dabei in geschweifte Klammern gefasst. Innerhalb der geschweiften Klammern wird jeder Wert, den ein Struct umschließt, durch einen Bezeichner bzw. Namen und einen Typen, getrennt durch ein `:`, deklariert. Diese Kombination aus Name und Typ wird als Feld (engl. field) bezeichnet. Nach jedem Feld folgt ein Komma (`,`), welches das Feld vom danach folgenden Feld trennt. Neben Feldern können Structs auch Methoden, Funktionen, Konstanten und Variablen enthalten.
