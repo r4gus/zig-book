@@ -781,9 +781,218 @@ Herzlichen Glückwunsch! Sie haben ihre erste graphische Benutzerobefläche in Z
 
 == Zig als C Build-System
 
-Zig integriert nicht nur hervorragend mit C sondern kann auch als Build-System für C und C++ verwendet werden. Damit stellt Zig unter anderem eine Alternative zu Make oder CMake dar.
+Zig integriert nicht nur hervorragend mit C sondern kann auch als Build-System für C und C++ Projekte verwendet werden. Damit stellt Zig unter anderem eine Alternative zu Make oder CMake dar.
 
 Genau wie für Zig Projekte können Sie auch zu Ihren C und C++ Projekten einen `build.zig` Datei hinzufügen, welche den Build-Prozess beschreibt. Außerdem macht es Sinn eine `build.zig.zon` Datei hinzuzufügen, die zusätzliche Metadaten zu Ihrem Projekt liefert.
 
+In diesem Beispiel möchte ich ihnen Zeigen, wie Sie eine kleine Bibliothek in C schreiben und diese im Anschluss in einem weiteren Projekt verwenden können.
 
+=== Bibliothek schreiben
 
+Legen Sie zuerst einen Ordner _math_ an und initialisieren Sie diesen mit *`cd math && zig init`*. Entfernen Sie danach alle Dateien in _src_ und fügen Sie die Datei _math.c_ hinzu, welche den folgenden Code enthält:
+
+#code(
+```c
+#include "math.h"
+
+int add(int a, int b) {
+    return a + b;
+}
+```,
+caption: [chapter01/math/src/math.c])
+
+Definieren Sie danach eine zugehörige Header-Datei:
+
+#code(
+```c
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+    int add(int, int);
+
+#ifdef __cplusplus
+}
+#endif
+```,
+caption: [chapter01/math/src/math.h])
+
+Unsere Bibliothek enthält genau eine Funktion `add()`, deren Prototyp in der Header-Datei deklariert wird. Damit die Bibliothek auch mit C++ verwendet werden kann, prüfen wir ob `__cplusplus` definiert ist und umschließen die Deklaration falls nötig mit `extern "C" { }`. Durch `extern "C"` sagen wir dem C++-Compiler, dass er keine zusätzlichen Parameterinformationen dem Namen hinzufügen soll, der zum linken verwendet wird.
+
+Öffnen Sie danach _build.zig_ und entfernen Sie alles bis auf den folgenden Code:
+
+#code(
+```zig
+const std = @import("std");
+
+pub fn build(b: *std.Build) void {
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
+    const lib = b.addSharedLibrary(.{
+        // Wir verwenden mymath damit es keine Überschneidungen mit
+        // der math.h aus der C-Standardbibliothek gibt!
+        .name = "mymath",
+        .target = target,
+        .optimize = optimize,
+    });
+    lib.addCSourceFiles(.{
+        .files = &.{"src/math.c"},
+        .flags = &.{"-std=gnu11"},
+    });
+
+    lib.addIncludePath(b.path("src"));
+    lib.installHeader(b.path("src/math.h"), "mymath.h");
+
+    lib.linkLibC();
+    b.installArtifact(lib);
+}
+```,
+caption: [chapter01/math/build.zig])
+
+Mit `addSharedLibrary()` erzeugen Sie eine neue dynamische Bibliothek. Sollten Sie eine statische Bibliothek benötigen, können Sie diesen Aufruf einfach durch `addStaticLibrary()` austauschen. Die Funktion erwartet ein Argument vom Typ `SharedLibraryOptions` mit dem die Eigenschaften der Bibliothek beeinflusst werden können. Dazu zählt unter anderem der Name der Bibliothek, sowie die Zielarchitektur (`target`) und der Optimierungsgrad (`optimize`).
+
+C-Quelldateien können der Bibliothek `lib`, mit der Methode `addCSourceFiles()`, hinzugefügt werden. Zusätzlich zu den Quelldateien können auch Flags angegeben werden, die beim kompilieren mit berücksichtigt werden sollen. `addCSourceFiles()` kann dabei beliebig oft aufgerufen werden.
+
+```zig
+lib.addCSourceFiles(.{
+    .files = &.{"src/math.c"},
+    .flags = &.{"-std=gnu11"},
+});
+```
+
+Zig sucht automatisch nach benötigten Headern im System (zum Beispiel in _/usr/include_), jedoch kann es auch nötig sein weitere Pfade anzugeben, in denen für das Projekt benötigte Header liegen. Dies erfolgt durch die `addIncludePath()` Methode, welche auf dem mit `addStaticLibrary()` erzeugten Objekt aufgerufen wird. Der Pfad kann relativ zum Root-Verzeichnis des Projekts angegeben werden.
+
+```zig
+lib.addIncludePath(b.path("src"));
+```
+
+Wenn die eigene Bibliothek Header exportieren soll, die für die Verwendung der Bibliothek benötigt werden, so kann dies durch `installHeader()` erfolgen. Die Methode erwartet als erstes Argument einen Pfad zu der zu exportierenden Header-Datei und als zweites den Namen für die Header-Datei, unter welchem diese exportiert werden soll. Im gegebenen Fall exportieren wir die Header Datei unter dem Namen _mymath.h_, damit diese sich nicht mit der _math.h_ aus der Standardbibliothek überschneidet.
+
+```zig
+lib.installHeader(b.path("src/math.h"), "mymath.h");
+```
+
+Bei der Verwendung von C wird in den meisten Fällen LibC benötigt, die Standardbibliothek für die Programmiersprache C. Diese kann mit `linkLibC()` gelinkt werden.
+
+```zig
+lib.linkLibC();
+```
+
+Mit `installArtifact()` kann Zig angewiesen werden die Bibliothek zu bauen.
+
+```zig
+b.installArtifact(lib);
+```
+
+Nach dem Ausführen von *`zig build`* sollten Sie die folgenden Dateien in _zig-out_ vorfinden:
+
+```bash
+$ ls -R zig-out/
+zig-out/:
+include  lib
+
+zig-out/include:
+math.h
+
+zig-out/lib:
+libmath.a
+```
+
+Um die Bibliothek systemweit verwenden zu können, müssen die Dateien an die entsprechenden Stellen im Dateisystem kopiert werden. Unter Linux ist dies zum Beispiel _/usr/local/include_ für _math.h_. Für dieses Beispiel wird dies jedoch nicht benötigt.
+
+=== Bibliothek einbinden
+
+Um die im vorherigen Abschnitt implementierte Bibliothek zu verwenden, erzeugen wir mit *`mkdir user && cd user && zig init`* ein neues Projekt, im selben Verzeichnis, in dem auch _math_ liegt.
+
+Für diesen Teil des Beispiels verwenden wir C++, damit Sie mir auch glauben wenn ich Ihnen sage, dass Sie Zig sowohl für C als auch C++ Projekte verwenden können. Löschen Sie alle Dateien unter _src_ und fügen Sie die Datei _src/main.cpp_ hinzu.
+
+#code(
+```cpp
+#include <iostream>                                                                           
+#include "mymath.h"
+
+int main()
+{
+    std::cout << "4 + 3" << add(4, 3) << "\n";
+}
+```,
+caption: [chapter01/user/src/main.cpp])
+
+Fügen Sie als nächstes unter _build.zig.zon_ die _math_ Bibliothek als Abhängigkeit hinzu:
+
+#code(
+```zig
+//...
+.dependencies = .{
+    .mymath = .{
+        .path = "../math",                                                                
+    },
+},
+//...
+```,
+caption: [chapter01/user/build.zig.zon])
+
+Entfernen Sie dann alles bis auf den folgenden Code aus _build.zig_:
+
+#code(
+```zig
+const std = @import("std");
+
+pub fn build(b: *std.Build) void {
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
+    const math_dep = b.dependency("mymath", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const exe = b.addExecutable(.{
+        .name = "user",
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.addCSourceFiles(.{
+        .files = &.{"src/main.cpp"},
+        .flags = &.{},
+    });
+    exe.linkLibrary(math_dep.artifact("mymath"));
+    exe.linkLibCpp();
+    b.installArtifact(exe);
+
+    // Erlaubt es mit `zig build run` die Anwendung auszuführen.
+    const run_cmd = b.addRunArtifact(exe);
+    run_cmd.step.dependOn(b.getInstallStep());
+    if (b.args) |args| {
+        run_cmd.addArgs(args);
+    }
+    const run_step = b.step("run", "Run the app");
+    run_step.dependOn(&run_cmd.step);
+}
+```,
+caption: [chapter01/user.build.zig])
+
+Zwei Besonderheiten dieses Build-Skripts sind zum einen der Aufruf von `b.dependency()`, sowie `exe.linkLibrary()`.
+
+Mit `b.dependency()` können sie, über den Namen (in diesem Fall `mymath`), auf die in _build.zig.zon_ definierten Abhängigkeiten zugreifen. Als zusätzliches Argument erwartet die Methode sowohl die Zielarchitektur als auch den Optimierungsgrad.
+
+```zig
+const math_dep = b.dependency("mymath", .{
+    .target = target,
+    .optimize = optimize,
+});
+```
+
+Die `mymath` Abhängigkeit enthält sowohl die dynamische Bibliothek, als auch die zugehörige Header-Datei _mymath.h_ (beziehungsweise die Bauanleitung für diese). Mit `exe.linkLibrary()` können wir die Bibliothek mit unserer Executable linken. Hierzu greifen wir mit `math_dep.artifact("mymath")` auf die Bibliothek zu und übergeben diese an `linkLibrary()` #footnote[Eigentlich greifen wir mit `artifact()` auf den Compile-Step für `mymath` zu.].
+
+```zig
+exe.linkLibrary(math_dep.artifact("mymath"));
+```
+
+Mit *`zig build run`* können Sie die C++-Anwendung bauen und ausführen.
+
+```bash
+$ zig build run
+4 + 3 = 7
+```
