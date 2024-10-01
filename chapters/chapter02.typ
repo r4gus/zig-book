@@ -15,6 +15,10 @@ Weiterhin unterstützt Zig optionale Typen, welche die Abwesenheit eines Wertes 
 
 In Zig sind Fehler ebenfalls Werte, das heißt anstatt eine Exception zu werfen können Funktionen einen Fehler-Wert an die Aufrufende Funktion zurückgeben, welche potenzielle Fehler behandeln muss bevor auf den eigentlichen Rückgabewert zugegriffen werden kann.
 
+#tip-box([
+    Im laufe dieses Buches werden Sie häufiger auf die Wörter _Ausdruck_ (engl. _Expression_) und _Statement_ stoßen. Ein Ausdruck ist ein "Stück-Code", das evaluiert werden kann und einen Wert produziert. Statements dagegen, produzieren keinen Wert, das heißt sie können unter anderem nicht als Funktionsargument verwendet werden.
+])
+
 == Konstanten und Variablen
 
 Konstanten und Variablen bestehen aus einem Namen in Snake-Case (`buffer` oder `private_key`) und einem Typen (zum Beispiel `u8` oder `[]const u8`). Sie werden verwendet um Werte vom entsprechenden Typ zu binden (zum Beispiel `13` oder `"Hello, World!"`). Konstanten können nach ihrer Initialisierung nicht mehr neu zugewiesen werden.

@@ -16,7 +16,7 @@ Zig als Systemprogrammiersprache ist unter anderem geeignet für:
 - Simulationen
 - Die Entwicklung von höheren Programmiersprachen
 
-Insbesondere Startups, aber auch große Unternehmen, haben in den letzten Jahren auf Zig als Programmiersprache und Build-System gesetzt. Darunter Uber #footnote[https://www.uber.com/en-DE/blog/bootstrapping-ubers-infrastructure-on-arm64-with-zig/], Tigerbeetle #footnote[https://tigerbeetle.com/], und ZML #footnote[https://zml.ai/]. Dies verwenden Zig in ganz unterschiedlichen Anwendungsbereichen, darunter Datenbanken und maschinellem Lernen.
+Insbesondere Startups, aber auch große Unternehmen, haben in den letzten Jahren auf Zig als Programmiersprache und Build-System gesetzt. Darunter Uber #footnote[https://www.uber.com/en-DE/blog/bootstrapping-ubers-infrastructure-on-arm64-with-zig/], Tigerbeetle #footnote[https://tigerbeetle.com/], und ZML #footnote[https://zml.ai/]. Diese verwenden Zig in ganz unterschiedlichen Anwendungsbereichen, darunter Datenbanken und maschinellem Lernen.
 
 In der Welt der Systemprogrammiersprachen reiht sich Zig neben C ein und verzichtet auf viele Konzepte die andere Programmiersprachen überkomplex machen, darunter Vererbung. Damit ist Zig erfrischend übersichtlich, was vor allem Einsteigern zu gute kommt, bietet jedoch auch viele Verbesserungen gegenüber C. Ein wichtiger Fokus liegt auf der Lesbarkeit des Codes, d.h. was man sieht wird vom Computer später auch tatsächlich so ausgeführt (mit Abstrichen natürlich). Insbesondere bedeutet das: keine versteckten Allokationen, bei denen die Sprache ohne Zutun des Entwicklers dynamisch Speicher alloziert. Alles was mit der Allokation von dynamischem Speicher zu tun hat ist in Zig explizit!
 

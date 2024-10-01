@@ -5,7 +5,7 @@
   title: [Zig Basics],
   sub-title: [Systemprogrammierung für das 21. Jahrhundert],
   author: "David Pierre Sugar",
-  dedication: [],
+  dedication: [Für Franzi und meinen Vater Pierre, der mir Ruby gezeigt hat.],
   publishing-info: [
     Self Publishers Worldwide \
     Seattle San Francisco New York \
