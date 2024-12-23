@@ -689,7 +689,7 @@ Nachdem Sie den Ordner entpackt haben, müssen drei Umgebungsvariablen erzeugt b
 
 - Fügen Sie zu `Path` den Pfad _C:\\gtk\\bin_ hinzu.
 - Fügen Sie zu `LIB` den Pfad _C:\\gtk\\lib_ hinzu. Erzeugen Sie eine neu Variable mit dem Namen `LIB`, falls diese nicht existiert.
-- Fügen Sie zu `INCLUDE` die Pfade _C:\\gtk\\include;C:\\gtk\\include\\cairo;C:\\gtk\\include\\glib-2.0;C:\\gtk\\include\\gobject-introspection-1.0;C:\\gtk\\lib\\glib-2.0\\include;_ hinzu. Erzeugen Sie eine neu Variable mit dem Namen `LIB`, falls diese nicht existiert.
+- Fügen Sie zu `INCLUDE` die Pfade _C:\\gtk\\include;C:\\gtk\\include\\cairo;C:\\gtk\\include\\glib-2.0;C:\\gtk\\include\\gobject-introspection-1.0;C:\\gtk\\lib\\glib-2.0\\include;_ hinzu. Erzeugen Sie eine neu Variable mit dem Namen `INCLUDE`, falls diese nicht existiert.
 
 #figure(
   image("../images/chapter01/gtk_variables.PNG", width: 80%),
