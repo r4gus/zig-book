@@ -662,7 +662,49 @@ Hello, World!
 
 Ein weiterer Anwendungsfall für Zig ist die Entwicklung graphischer Applikationen. Hierfür existiert eine Vielzahl an Bibliotheken, darunter GTK und QT. Was beide Bibliotheken gemeinsam haben ist, dass sie in C beziehungsweise C++ geschrieben sind. Normalerweise würde das die Entwicklung von Bindings voraussetzen, um die Bibliotheken in anderen Sprachen nutzen zu können. Zig integriert jedoch direkt C, wodurch C-Bibliotheken direkt verwendet werden können #footnote[Mit wenigen Einschränkungen. Zig scheitert zurzeit noch an der Übersetzung einer Makros.].
 
-In diesem Abschnitt zeige ich Ihnen, wie sie eine simple GUI-Applikation mit GTK4 und Zig schreiben können. Hierfür müssen Sie zuerst einen neuen Projektordner anlegen.
+In diesem Abschnitt zeige ich Ihnen, wie sie eine simple GUI-Applikation mit GTK4 und Zig schreiben können. Hierfür müssen Sie zuerst eine GTK4-Entwicklungsumgebung installieren.
+
+=== Installation unter Linux
+
+Unter Linux ist die Installation von GTK4 relativ einfach. Für die meisten Distributionen kann GTK4 einfach über den mitgelieferten Paketmanager, zum Beispiel APT unter Debian und Ubuntu, installiert werden.
+
+```bash
+sudo apt install libgtk-4-dev
+```
+
+=== Installation unter Windows
+
+Unter Windows ist die Installation von GTK4 etwas umständlicher als unter Linux. Ein Weg ist die Verwendung von gvsbuild #footnote[https://github.com/wingtk/gvsbuild], beziehungsweise den von gsvbuild gebauten GTK-Bibliotheken. Unter *Releases* finden sich sowohl Pre-Build GKT3 als GTK4 Bibliotheken für Windows.
+
+Laden Sie das aktuellste Zip-Archiv, zum Beispiel _GTK4\_Gvsbuild\_2024.12.0\_x64.zip_ herunter und entpacken sie dessen Inhalt nach _C:\\gtk_.
+
+#figure(
+  image("../images/chapter01/gtk_folder_win.PNG", width: 80%),
+  caption: [
+    Der Inhalt von _C:\\gtk_ nach dem Entpacken.
+  ],
+)
+
+Nachdem Sie den Ordner entpackt haben, müssen drei Umgebungsvariablen erzeugt beziehungsweise angepasst werden. Hierzu gehen Sie analog wie bei der Installation von Zig vor (siehe Anfang des Kapitels).
+
+- Fügen Sie zu `Path` den Pfad _C:\\gtk\\bin_ hinzu.
+- Fügen Sie zu `LIB` den Pfad _C:\\gtk\\lib_ hinzu. Erzeugen Sie eine neu Variable mit dem Namen `LIB`, falls diese nicht existiert.
+- Fügen Sie zu `INCLUDE` die Pfade _C:\\gtk\\include;C:\\gtk\\include\\cairo;C:\\gtk\\include\\glib-2.0;C:\\gtk\\include\\gobject-introspection-1.0;C:\\gtk\\lib\\glib-2.0\\include;_ hinzu. Erzeugen Sie eine neu Variable mit dem Namen `LIB`, falls diese nicht existiert.
+
+#figure(
+  image("../images/chapter01/gtk_variables.PNG", width: 80%),
+  caption: [
+    Erweiterung der Umgebungsvariablen `Path`, `LIB` und `INCLUDE`.
+  ],
+)
+
+Weitere Informationen finden Sie im angegebenen Github-Repository.
+
+Achten Sie darauf, dass Sie den Rechner neu starten beziehungsweise ein neues PowerShell-Fenster öffnen müssen, bevor die Änderungen wirksam werden.
+
+=== Projekt anlegen
+
+Nachdem GTK4 korrekt installiert wurde legen wir als erstes einen neuen Projektordner an und initialisieren diesn.
 
 ```bash
 $ mkdir gui
@@ -675,7 +717,7 @@ info: created src/root.zig
 info: see `zig build --help` for a menu of options
 ```
 
-Danach fügen Sie `gtk4` als Bibliothek zu Ihrer Anwendung hinzu. Hierfür öffnen Sie `build.zig` mit einem Texteditor und erweitern die Datei um die folgenden Zeilen:
+Fügen Sie danach `gtk4` als Bibliothek zu Ihrer Anwendung hinzu. Hierfür öffnen Sie `build.zig` mit einem Texteditor und erweitern die Datei um die folgenden Zeilen:
 
 #code(
 ```zig 
@@ -690,13 +732,15 @@ exe.linkSystemLibrary("gtk4");
 ```,
 caption: [chapter01/gui/build.zig])
 
-Stellen Sie sicher, dass Sie die Developer-Bibliothek von GTK4 auf Ihrem System installiert haben. Unter Debian/Ubuntu können Sie diese über den APT-Paket-Manager installieren.
+Mit `linkSystemLibrary` können Sie Systembibliotheken, in unserem Fall GTK4, verlinken. LibC ist eine standart C-Bibliothek und wird, bis auf wenige Ausnahmen, von allen C-Anwendungen, unter anderem GTK4, benötigt. Um LibC zu verlinken wird die Funktion `linkLibC` verwendet, deren Aufruf äquivalent zu dem Aufruf `linkSystemLibrary("c")` ist. Grundsätzlich können Sie sich merken, dass Sie bei der Verwendung einer C-Bibliothek mit Zig auch immer LibC verlinken müssen #footnote[Seltene Ausnahmen bestätigen dabei die Regel].
 
-```bash
-sudo apt install libgtk-4-dev
-```
+Führen Sie nach dem Hinzufügen der benötigten Bibliotheken *`zig build`* aus um zu überprüfen, dass Zig die benötigte Bibliothek auf Ihrem System findet. An dieser Stelle kann es zu Problemen kommen, die auf eine falsche Installation von GTK4 zurückzuführen sind. Stellen Sie bei Problemen sicher, dass GTK4 auf Ihrem System vorliegt und dass die entsprechenden Umgebungsvariablen auf GTK4 verweisen.
 
-Führen Sie danach *`zig build`* aus um zu überprüfen, dass Zig die benötigte Bibliothek auf Ihrem System findet. Erzeugen Sie als nächstes die Datei _src/gtk.zig_ und fügen Sie den Folgenden Code hinzu:
+War der Build-Prozess erfolgreich, steht der eigentlichen Anwendung nichts mehr im Wege.
+
+=== Die Anwendung
+
+Erzeugen Sie als nächstes die Datei _src/gtk.zig_ und fügen Sie den Folgenden Code hinzu:
 
 #code(
 ```zig 
