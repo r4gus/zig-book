@@ -10,6 +10,8 @@ Um Zig zu installieren besuchen Sie die Seite #link("https://ziglang.org") und f
 
 Die Installation ist unter allen Betriebssystemen relativ einfach durchzuführen. In der Download Sektion #footnote[https://ziglang.org/download/] finden Sie vorkompilierte Zig-Compiler für die gängigsten Betriebssysteme, darunter Linux, macOS und Windows. 
 
+=== Linux
+
 Unter Linux können Sie mit dem Befehl *`uname -a`* Ihre Architektur bestimmen. In meinem Fall ist dies `X86_64`.
 
 ```bash
@@ -81,6 +83,67 @@ $ zig zen
  * Together we serve the users.
 ```
 
+=== Windows
+
+Der einfachste Weg um den Zig-Compiler unter Windows zu installieren ist unter Verwendung von Visual Studio Code. Hierzu besuchen Sie #link("https://code.visualstudio.com/") und laden dort zuerst den Installer für Windows herunter. Öffnen Sie nach der Installation VS-Code, suchen Sie nach der `Zig Language` Extension und installieren Sie diese #footnote[Stellen Sie sicher, dass Sie die korrekte Extension installieren. Der Herausgeber der Extension ist `ziglang`, markiert mit einem blauen Haken.].
+
+#figure(
+  image("../images/chapter01/vs_code.PNG", width: 80%),
+  caption: [
+    Installation der `Zig Language` Extension in Visual Studio Code 
+  ],
+)
+
+Die Extension installiert nicht nur den Zig-Compiler, sondern auch zusätzliche Tools, wie etwa den ZLS Language Server #footnote[https://github.com/zigtools/zls].
+
+Mit der Tastenkombination `CTRL + Shift + P` lässt sich ein Kontextmenü öffnen, über welches sich verschiedene Zig-Kommandos ausführen lassen:
+
+- Mit dem Kommando `Zig Setup: Install Zig` lassen sich unterschiedlich Compiler-Versionen installieren. Für dieses Buch wird die Version 0.13.0 benötigt. Auf meinem Computer werden die verschiedenen Versionen alle unter _C:\\Users\\\<UserName\>\\AppData\\Roaming\\Code\\User\\globalStorage\\ziglang.vscode-zig\\zig_ abgelegt, d.h. Version 0.13.0 wird unter _C:\\Users\\\<UserName\>\\AppData\\Roaming\\Code\\User\\globalStorage\\ziglang.vscode-zig\\zig\\windows-x86_64-0.13.0_ installiert.
+- Das Kommando `Zig: Run Zig` kompiliert und führt das derzeitige Projekt aus.
+
+Zum jetzigen Zeitpunkt gibt es leider keine einfache Möglichkeit, via Visual Studio Code, direkt ein neues Zig-Projekt anzulegen. Um ein neues Projekt anzulegen öffnen wir mittels `File > Open Folder...` zuerst einen leeren Projektordner. Danach kann mit `Terminal > New Terminal` ein neues Terminalfenster geöffnet werden. Innerhalb des Fensters kann mit *`C:\Pfad\zu\Zig\zig.exe init`* der Projektordner initialisiert werden. Der Pfad zu _zig.exe_ sollte sich grundsätzlich nur in der Versionsnummer und dem Benuternamen unterscheiden, d.h. es sollte ausreichen bei dem folgenden Kommando *`C:\Users\Sugar\AppData\Roaming\Code\User\globalStorage\ziglang.vscode-zig\zig\windows-x86_64-0.13.0\zig.exe init`* `Sugar` durch Ihren Benutzernamen zu ersetzen.
+
+#figure(
+  image("../images/chapter01/vs_code_new.PNG", width: 80%),
+  caption: [
+    Initialisierung eines neuen Zig-Projekts über die Kommandozeile in VS-Code
+  ],
+)
+
+Alternativ können Sie Zig auch manuell herunterladen und dessen Pfad zur Path-Umgebungsvariable hinzufügen. Der Vorteil hierbei ist, dass sie nicht bei jedem Aufruf von _zig.exe_ den gesamten Pfad mit angeben müssen. Die Path-Variable wird vom Betriebssystem verwendet, um nach ausführbaren Dateien zu suchen. Um den Pfad hinzuzufügen gehen Sie wie folgt vor:
+
+1. Öffnen sie die Systemsteuerungen (engl. System).
+2. Wählen Sie *Erweiterte Systemsteuerungen* aus.
+3. Klicken Sie auf *Umgebungsvariablen* und wählen Sie unter *Systemvariablen* die Variable _Path_ aus. Wählen sie *Bearbeiten* (Edit) aus.
+4. Fügen Sie den Pfad zu _zig.exe_ zu den bestehenden Pfaden hinzu und schließen Sie alle Fenster mit *OK*.
+
+#figure(
+  image("../images/chapter01/win_path.png", width: 80%),
+  caption: [
+    Neuen Pfad unter Windows hinzufügen
+  ],
+)
+
+Angenommen wir haben die Datei _zig-windows-x86\_64-0.13.0.zip_ heruntergeladen und in den _Documents_ Ordner entpackt (Bei mir wäre der vollständige Pfad in diesem Fall _C:\\Users\\Sugar\\Documents\\zig-windows-x86\_64-0.13.0_). In diesem Fall können Sie die enthaltene _zig.exe_ zugänglich machen, indem Sie, wie oben beschrieben, die _Path_ umgebungsvariable auswählen und *Bearbeiten* beziehungsweise *Edit* auswählen. Danach sehen Sie eine Liste aller Pfade, auf die _Path_ verweist. Klicken Sie auf *Neu* / *New* und tragen Sie hier _C:\\Users\\Sugar\\Documents\\zig-windows-x86\_64-0.13.0_ ein, wobei Sie Sugar durch Ihren Benutzernamen ersetzen. Danach drücken Sie *OK*.
+
+#figure(
+  image("../images/chapter01/win_path2.PNG", width: 40%),
+  caption: [
+    Der neue Pfad verweist auf den heruntergeladenen Zig-Ordner
+  ],
+)
+
+Damit die Änderungen wirksam werden muss danach die Eingabeaufforderung bzw. PowerShell neu gestartet werden.
+
+#figure(
+  image("../images/chapter01/win_zig_zen.PNG", width: 80%),
+  caption: [
+    Nach dem Hinzufügen des Zig-Ordners zu _Path_ sollten _zig.exe_ von überall, innerhalb der PowerShell, aufrufbar sein
+  ],
+)
+
+== Compiler Grundlagen
+
 Mit dem Kommando *`zig help`* lässt sich ein Hilfetext auf der Kommandozeile anzeigen, der die zu Verfügung stehenden Kommandos auflistet.
 
 Praktisch ist, dass Zig für uns ein neues Projekt, inklusive Standardkonfiguration, anlegen kann.
@@ -95,7 +158,7 @@ info: created src/root.zig
 info: see `zig build --help` for a menu of options
 ```
 
-Das Kommando initialisiert den gegebenen Ordner mit Template-Dateien, durch die sich sowohl eine Executable, als auch eine Bibliothek bauen lassen. Schaut man sich die erzeugten Dateien an so sieht man, dass Zig eine Datei namens _build.zig_ erzeugt hat. Bei dieser handelt es sich um die Konfigurationsdatei des Projekts. Sie beschreibt aus welchen Dateien eine Executable bzw. Bibliothek gebaut werden soll und welche Abhängigkeiten (zu anderen Bibliotheken) diese besitzen. Ein bemerkenswertes Detail ist dabei, dass _build.zig_ selbst ein Zig Programm ist, welches in diesem Fall zur Compile-Zeit ausgeführt wird um die eigentlichle Anwendung zu bauen.
+Das Kommando *`zig init`* initialisiert den gegebenen Ordner mit Template-Dateien, durch die sich sowohl eine Executable, als auch eine Bibliothek bauen lassen. Schaut man sich die erzeugten Dateien an so sieht man, dass Zig eine Datei namens _build.zig_ erzeugt hat. Bei dieser handelt es sich um die Konfigurationsdatei des Projekts. Sie beschreibt aus welchen Dateien eine Executable bzw. Bibliothek gebaut werden soll und welche Abhängigkeiten (zu anderen Bibliotheken) diese besitzen. Ein bemerkenswertes Detail ist dabei, dass _build.zig_ selbst ein Zig Programm ist, welches in diesem Fall zur Compile-Zeit ausgeführt wird um die eigentlichle Anwendung zu bauen.
 
 Die Datei _build.zig.zon_ enthält weitere Informationen über das Projekt, darunter dessen Namen, die Versionsnummer, sowie mögliche Dependencies. Dependencies können dabei lokal vorliegen und über einen relativen Pfad angegeben oder von einer Online-Quelle, wie etwa Github, bezogen werden. Die Endung der Datei steht im übrigen für Zig Object Notation (ZON), eine Art Konfigurationssprache für Zig, die derzeit, genauso wie Zig selbst, noch nicht final ist.
 
@@ -129,7 +192,7 @@ const std = @import("std");
 
 Mit der `@import()` Funktion importieren wir die Standardbibliothek (`std`) und binden diese an eine Konstante mit dem selben Namen.
 Die Standardbibliothek ist eine Ansammlung von nützlichen Funktionen und Datentypen, die während der Entwicklung von Anwendungen
-häufiger zum Einsatz kommen und deswegen vom Zig zur Verfügung gestellt werden. Die Funktion `@import()` wird nicht nur zum importieren
+häufiger zum Einsatz kommen und deswegen von Zig zur Verfügung gestellt werden. Die Funktion `@import()` wird nicht nur zum importieren
 der Standardbibliothek verwendet, sondern auch um auf Module und andere, zu einem Projekt gehörende, Quelldateien zuzugreifen.
 
 Nach der Definition der Konstante `std` beginnt die `main` Funktion:
