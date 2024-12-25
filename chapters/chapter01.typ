@@ -727,6 +727,7 @@ const exe = b.addExecutable(.{
 });
 // Fügen Sie die folgenden beiden Zeilen hinzu
 exe.linkLibC();
+// Gegebenfalls müssen Sie "gtk4" durch "gtk-4" ersetzen!
 exe.linkSystemLibrary("gtk4"); 
 //...
 ```,
@@ -734,7 +735,7 @@ caption: [chapter01/gui/build.zig])
 
 Mit `linkSystemLibrary` können Sie Systembibliotheken, in unserem Fall GTK4, verlinken. LibC ist eine standart C-Bibliothek und wird, bis auf wenige Ausnahmen, von allen C-Anwendungen, unter anderem GTK4, benötigt. Um LibC zu verlinken wird die Funktion `linkLibC` verwendet, deren Aufruf äquivalent zu dem Aufruf `linkSystemLibrary("c")` ist. Grundsätzlich können Sie sich merken, dass Sie bei der Verwendung einer C-Bibliothek mit Zig auch immer LibC verlinken müssen #footnote[Seltene Ausnahmen bestätigen dabei die Regel].
 
-Führen Sie nach dem Hinzufügen der benötigten Bibliotheken *`zig build`* aus um zu überprüfen, dass Zig die benötigte Bibliothek auf Ihrem System findet. An dieser Stelle kann es zu Problemen kommen, die auf eine falsche Installation von GTK4 zurückzuführen sind. Stellen Sie bei Problemen sicher, dass GTK4 auf Ihrem System vorliegt und dass die entsprechenden Umgebungsvariablen auf GTK4 verweisen.
+Führen Sie nach dem Hinzufügen der benötigten Bibliotheken *`zig build`* aus um zu überprüfen, dass Zig die benötigte Bibliothek auf Ihrem System findet. An dieser Stelle kann es zu Problemen kommen, die entweder auf eine falsche Installation von GTK4 oder auf einen falschen Bezeichner (probieren Sie gegebenenfalls `gtk-4` anstelle von `gtk4`) zurückzuführen sind. Stellen Sie bei Problemen sicher, dass GTK4 auf Ihrem System vorliegt und dass die entsprechenden Umgebungsvariablen auf GTK4 verweisen.
 
 War der Build-Prozess erfolgreich, steht der eigentlichen Anwendung nichts mehr im Wege.
 
