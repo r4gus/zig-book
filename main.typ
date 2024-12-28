@@ -11,6 +11,7 @@
     Seattle San Francisco New York \
     London Paris Rome Beijing Barcelona
   ],
+  edition: "First Edition (beta)",
 )
 
 #include "chapters/chapter01.typ"

@@ -24,7 +24,7 @@ Fun-Fact: Während der StackOverflow 2024 Developer Survey #footnote[https://sur
 
 #heading(outlined: false, "Zielgruppe")
 
-Falls Sie bereits Erfahrung mit C oder einer anderen systemnahen Programmiersprache haben und mehr über Zig erfahren wollen ist diese Buch für Sie. Wenn Sie Erfahrung mit einer höheren Programmiersprache haben und mehr über Systemprogrammierung und Zig erfahren wollen ist dieses Buch ebenfalls für Sie.
+Falls Sie bereits Erfahrung mit C oder einer anderen systemnahen Programmiersprache haben und mehr über Zig erfahren wollen ist diese Buch für Sie. Wenn Sie Erfahrung mit einer höheren Programmiersprache haben und mehr über Systemprogrammierung und Zig erfahren wollen ist dieses Buch ebenfalls für Sie. 
 
 Grundsätzlich empfehle ich Ihnen parallel zum lesen dieses Buches eigene Programmierprojekte zu realisieren um praktische Erfahrung mit der Sprache zu sammeln. Beginnen Sie mit etwas einfachem, vertrauten und steigern Sie sich, sobald Sie ein Gefühl für die Sprache bekommen haben. Sie werden merken, dass die Grundlagen in Zig schnell zu erlernen sind, es gibt jedoch auch nach einiger Zeit viel zu entdecken. Sollten Sie etwas Inspiration benötigen, so kann Ihnen Project Euler #footnote[https://projecteuler.net/about] eventuell weiterhelfen.
 
@@ -38,12 +38,9 @@ Zwar sind die meisten Konzepte und Beispiele in diesem Buch unabhängig von eine
 
 #heading(outlined: false, "Struktur")
 
-Die ersten drei Kapitel beschäftigen sich mit den Grundlagen der Programmiersprache Zig. Das erste Kapitel bietet anhand von Beispielen einen Überblick über die Sprache. Im zweiten Kapitel werden die grundlegenden Datentypen der Programmiersprache näher beleuchtet. In Kapitel drei wird der Leser in grundlegende Konzepte der Speicherverwaltung eingeführt, die für die korrekte und sichere Entwicklung von Anwendungen unabdingbar sind.
+Die ersten Kapitel beschäftigen sich mit den Grundlagen der Programmiersprache Zig. Das erste Kapitel bietet anhand von Beispielen einen Überblick über die Sprache. Im zweiten Kapitel werden die grundlegenden Datentypen der Programmiersprache näher beleuchtet. In Kapitel drei wird der Leser in grundlegende Konzepte der Speicherverwaltung eingeführt, die für die korrekte und sichere Entwicklung von Anwendungen unabdingbar sind. In Kapitel vier nutzen wir das Gelernte und entwickeln wir einen kleinen, minimalistischen Taschenrechner. Kapitel fünf geht näher auf If-Statements, Switch und Schleifen ein.
 
-Im zweiten Abschnitt des Buches werden wir anhand von Fallbeispielen verschiedene Einsatzszenarios von Zig näher betrachten, darunter:
-
-- Schreiben eines Parsers
-- Breakout
+Diese Buch befindet sich noch im Entstehungsprozess, das heiß es wird nach und nach um weitere Kapitel ergänzt. Weiterhin kann sich der Inhalt einzelner Kapitel ändern.
 
 Zig bietet für jede Compiler-Version zusätzliche Ressourcen zum Lernen der Sprache und als Referenz #footnote[https://ziglang.org/learn/], darunter die Language Reference und die Online-Dokumentation der Standardbibliothek. Diese können beim Entwickeln eigener Projekte aber auch beim nachvollziehen der Code-Beispiele eine große Hilfe darstellen.
 
