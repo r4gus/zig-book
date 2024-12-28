@@ -1043,6 +1043,18 @@ Wichtig dabei ist, dass das mit `data[start..end :x]` erzeugte Slice auch tatsä
     Im Allgemeinen werden in Zig Slices, gegenüber sentinel-terminated Pointern, präferiert. Der Grund hierfür ist, dass Slices über Bounds-Checking verfügen und so gängige Speicherfehler abgefangen werden können. Es gibt jedoch auch Situationen, in denen many-item Pointer bzw. sentinel-terminated Pointer explizit benötigt werden, z.B. beim Arbeiten mit C Code. Auf die Interoperabilität zwischen Zig und C wird in einem späteren Kapitel noch näher eingegangen.
 ])
 
+=== Padding
+
+Ein Thema, welches immer wieder zu Verwirrung führt und teilweise online falsch dargestellt wird, ist der Speicherverbrauch von bestimmten Arten von Arrays beziehungsweise Slices. Ein klassisches Beispiel ist hierbei der Typ `[8]u1`.
+
+Oft findet man Behauptungen, dass `[8]u1` genau ein Byte Speicher benötigt, da das Array aus exakt acht Bit besteht. Das ist jedoch nicht richtig. Das minimale Padding für einen Typen im Speicher beträgt ein Byte, d.h. obwohl `u1` nur ein Bit Speicher Benötigt wird trotzdem ein Byte pro `u1` reserviert. Hierfür gibt es verschiedene Erklärungsansätze. Einer davon ist die Adressierbarkeit einzelner Elemente eines Arrays. Angenommen ein Array `const arr: [8]u1 = .{0} ** 8;`. Von solch einem Array erwarten wir, einzelne Elemente adressieren zu können, zum Beispiel `&arr[3]` (Adresse des vierten Elements des Arrays `arr`). Die Zeigerarithmetik hierfür wäre `ELEM3 = ARR_BASE + 3`, wobei `ARR_BASE` die Basisadresse von `arr` im Speicher ist. Das erste Element beginnt dementsprechend an der Adresse `ARR_BASE + 0`, das zweite Element an der Adresse `ARR_BASE + 1` und so weiter (Ausgehend davon, dass jedes Element ein Byte benötigt).
+
+Gehen wir nun davon aus, jedes `u1` eines `[8]u1` würde tatsächlich nur ein Bit im Speicher belegen. Die Adressierung des ersten Elements wäre noch möglich (`ARR_BASE + 0`) aber wie würden die restlichen Elemente referenziert? Die Antwort hierauf lautet: gar nicht! Die meisten CPUs erlauben die Adressierung einzelner Bytes, was auch als Byte-Addressing #footnote[https://en.wikipedia.org/wiki/Byte_addressing] bezeichnet wird. Es gibt weiterhin einzelne, vor allem ältere Arichtekturen die nur Wörter adressieren können (Word-Addressing #footnote[https://en.wikipedia.org/wiki/Word_addressing]). Nicht existent ist jedoch Bit-Adressierung in der Computerachitektur.
+
+Das Padding (von Arrays und Slices) ist dabei nicht nur nice to know, sondern hat reelle Konsequenzen beim Programmieren. Gehen wir nämlich im obigen Beispiel davon aus, dass ein `[8]u1` genau ein Byte im Speicher belegt, so könnten wir in die Versuchung geraten das folgende zu versuchen: `@as(*u8, @ptrCast(arr.ptr))`. In diesem Fall wäre die Erwartungshaltung, dass `u8` äquivalent zu einem `[8]u1` ist. Das ist jedoch falsch und würde zwangsläufig zu Bugs führen!
+
+Mit `@sizeOf` lässt sich die Menge an Bytes bestimmen die benötigt werden um einen Bestimmten Typ im Speicher abzulegen. Für die Anzahl an Bits kann `@bitSizeOf` verwendet werden, zum Beispiel `@bitSizeOf([8]u8)`. In meinem Fall gibt `@bitSizeOf([8]u8)` den Wert 64 zurück, was das benötigt Padding mit einschließt.
+
 == Errors
 
 Während der Ausführung von Zig-Code kann ein Programm auf Fehler zur Laufzeit stoßen. Dabei kann es sich zum Beispiel um eine fehlende Datei handeln, die nicht geöffnet werde kann.
