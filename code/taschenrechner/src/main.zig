@@ -30,8 +30,8 @@ pub fn main() !void {
     // init SDL backend (creates and owns OS window)
     var backend = try Backend.initWindow(.{
         .allocator = gpa,
-        .size = .{ .w = 400.0, .h = 600.0 },
-        .min_size = .{ .w = 400.0, .h = 600.0 },
+        .size = .{ .w = 280.0, .h = 200.0 },
+        .min_size = .{ .w = 280.0, .h = 200.0 },
         .vsync = vsync,
         .title = "Taschenrechner",
     });
@@ -91,86 +91,54 @@ pub fn main() !void {
 }
 
 pub fn taschenrechner() !void {
-    var vbox = try dvui.box(@src(), .vertical, .{});
+    var vbox = try dvui.box(@src(), .vertical, .{
+        .expand = .both,
+    });
     {
         // Display
         try dvui.label(
             @src(),
             "{s}",
             .{display_text.items},
-            .{ .gravity_y = 0.5 },
+            .{
+                .expand = .horizontal,
+                .gravity_y = 0.5,
+                .gravity_x = 0.5,
+            },
         );
 
         // Ziffernblock
-        var block = try dvui.box(@src(), .vertical, .{});
+        var block = try dvui.box(@src(), .vertical, .{
+            .expand = .both,
+            .gravity_x = 0.5,
+        });
         {
-            var row1 = try dvui.box(@src(), .horizontal, .{});
-            {
-                if (try dvui.button(@src(), "7", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('7');
-                }
-                if (try dvui.button(@src(), "8", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('8');
-                }
-                if (try dvui.button(@src(), "9", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('9');
-                }
-                if (try dvui.button(@src(), "/", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('/');
-                }
-            }
-            row1.deinit();
+            const pad: [4][4][]const u8 = .{
+                .{ "7", "8", "9", "/" },
+                .{ "4", "5", "6", "*" },
+                .{ "1", "2", "3", "-" },
+                .{ "0", ",", "=", "+" },
+            };
 
-            var row2 = try dvui.box(@src(), .horizontal, .{});
-            {
-                if (try dvui.button(@src(), "4", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('4');
-                }
-                if (try dvui.button(@src(), "5", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('5');
-                }
-                if (try dvui.button(@src(), "6", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('6');
-                }
-                if (try dvui.button(@src(), "*", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('*');
-                }
-            }
-            row2.deinit();
+            for (pad, 0..) |row, id1| {
+                var row_box = try dvui.box(@src(), .horizontal, .{
+                    .gravity_x = 0.5,
+                    .id_extra = id1,
+                });
 
-            var row3 = try dvui.box(@src(), .horizontal, .{});
-            {
-                if (try dvui.button(@src(), "1", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('1');
+                for (row, 0..) |elem, id2| {
+                    if (try dvui.button(@src(), elem, .{}, .{
+                        .gravity_y = 0.5,
+                        .corner_radius = dvui.Rect.all(0.0),
+                        .min_size_content = dvui.Size.all(16.0),
+                        .id_extra = id2,
+                    })) {
+                        try addValue(elem[0]);
+                    }
                 }
-                if (try dvui.button(@src(), "2", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('2');
-                }
-                if (try dvui.button(@src(), "3", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('3');
-                }
-                if (try dvui.button(@src(), "-", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('-');
-                }
-            }
-            row3.deinit();
 
-            var row4 = try dvui.box(@src(), .horizontal, .{});
-            {
-                if (try dvui.button(@src(), "0", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('0');
-                }
-                if (try dvui.button(@src(), ",", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue(',');
-                }
-                if (try dvui.button(@src(), "=", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('=');
-                }
-                if (try dvui.button(@src(), "+", .{}, .{ .gravity_y = 0.5 })) {
-                    try addValue('+');
-                }
+                row_box.deinit();
             }
-            row4.deinit();
         }
         block.deinit();
     }

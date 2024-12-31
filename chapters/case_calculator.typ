@@ -518,8 +518,113 @@ caption: [taschenrechner/src/main.zig])
 
 Herzlichen Glückwunsch! Sie haben Ihren ersten, sehr minimalistischen Taschenrechner in Zig programmiert.
 
+== Refactoring
+
+Bevor wir unser kleines Projekt abschließen nutzen wir die Gelegenheit, um den Taschenrechner etwas aufzubessern. Zum einen kann der Code für den Ziffernblock vereinfacht werden. Zum anderen haben die Tasten teilweise unterschiedliche Größen.
+
+Anstelle den Ziffernblock manuell zu definieren, bietet es sich an diesen als zweidimensionales Array abzubilden.
+
+```zig
+const pad: [4][4][]const u8 = .{
+    .{ "7", "8", "9", "/" },
+    .{ "4", "5", "6", "*" },
+    .{ "1", "2", "3", "-" },
+    .{ "0", ",", "=", "+" },
+};
+```
+
+Im Anschluss könne wir über die einzelnen Elemente iterieren. Dazu verwenden wir zwei verschachtelte For-Schleifen (eine für jede Dimension des Arrays). Mit der äußeren Schliefen iterieren wir über die Zeilen und mit der Inneren über die einzelnen Elemente der Zeile.
+
+```zig
+for (pad, 0..) |row, id1| {
+    // Äußere Schleife
+
+    for (row, 0..) |elem, id2| {
+        // Innere Schleife
+    }
+}
+```
+
+Jedes Element in dvui, egal ob Box oder Button, wird mit einer Id versehen. Wird die selbe Funktion, zum Beispiel `box()` innerhalb einer Schleife, mehrfach verwendet, so kann dvui dem Element nicht automatisch eine eindeutige Id zuweisen. In solchen Fällen muss die `id_extra` Option beim jeweiligen Funktionsaufruf mit übergeben werden. Aus diesem Grund iterieren wir in den gezeigten For-Schleifen nicht nur über das Array `pad` sondern parallel auch über die Reihe _0, 1, 2, ..._ und verwenden den jeweiligen Index als Extra-Id bei den Funtkionsaufrufen zu `box()` und `button()`.
+
+Die gesamte Funktion sieht dementsprechend wie folgt aus:
+
+#code(
+```zig
+pub fn taschenrechner() !void {
+    var vbox = try dvui.box(@src(), .vertical, .{
+        .expand = .both,
+    });
+    {
+        // Display
+        try dvui.label(
+            @src(),
+            "{s}",
+            .{display_text.items},
+            .{
+                .expand = .horizontal,
+                .gravity_y = 0.5,
+                .gravity_x = 0.5,
+            },
+        );
+
+        // Ziffernblock
+        var block = try dvui.box(@src(), .vertical, .{
+            .expand = .both,
+            .gravity_x = 0.5,
+        });
+        {
+            const pad: [4][4][]const u8 = .{
+                .{ "7", "8", "9", "/" },
+                .{ "4", "5", "6", "*" },
+                .{ "1", "2", "3", "-" },
+                .{ "0", ",", "=", "+" },
+            };
+
+            for (pad, 0..) |row, id1| {
+                var row_box = try dvui.box(@src(), .horizontal, .{
+                    .gravity_x = 0.5,
+                    .id_extra = id1,
+                });
+
+                for (row, 0..) |elem, id2| {
+                    if (try dvui.button(@src(), elem, .{}, .{
+                        .gravity_y = 0.5,
+                        .corner_radius = dvui.Rect.all(0.0),
+                        .min_size_content = dvui.Size.all(16.0),
+                        .id_extra = id2,
+                    })) {
+                        try addValue(elem[0]);
+                    }
+                }
+
+                row_box.deinit();
+            }
+        }
+        block.deinit();
+    }
+    vbox.deinit();
+
+    try eval();
+}
+```,
+caption: [taschenrechner/src/main.zig])
+
+Die restlichen Optionen werden dazu verwendet, die Elemente zu zentrieren. Mit der `.expand` Option sagen wir dvui, dass die Boxen das gesamte Fenster (entweder nur in der Horizontalen `.horizontal`, in der Vertikalen oder in beide Richtungen `.both`) einnehmen sollen. Die `.gravity_x` Option definiert, dass das jeweilige Element innerhalb eines Containers zentral angeordnet werden soll.
+
+Für die einzelnen Buttons definieren wir, mittels `.min_size_content`, eine einheitliche, minimale Größe von 16.
+
+Damit sieht unsere Anwendung schlussendlich wie folgt aus.
+
+#figure(
+  image("../images/calculator/final_calc.png", width: 40%),
+  caption: [
+    Finaler Zustand des Taschenrechners
+  ],
+)
+
 == Zusammenfassung
 
 In diesem Kapitel haben Sie gelernt, wie Sie graphische Anwendungen mit dvui entwickeln. Wir haben uns angeschaut, wie ein neues Fenster erzeugt wird und haben dieses mit verschiedenen graphischen Elementen befüllt. Durch die Interaktion mit Buttons haben wir den Zustand unserer Anwendung verändert. Im weiteren haben wir gesehen, wie wir mit der Hilfe von Enums den Zustand unserer Anwendung im Blick behalten und ausgehend von diesem Zustand nur bestimmte Interaktionen zulassen.
 
-Bei unserem Taschenrechner gibt es noch viel Verbesserungsbedarf. Scheuen Sie sich deshalb nicht mit dem bestehenden Code zu experimentieren. Wie wäre es zum Beispiel mit einer Rücksetzfunktion?
+Bei unserem Taschenrechner gibt es noch viel Verbesserungsbedarf. Scheuen Sie sich deshalb nicht, mit dem bestehenden Code zu experimentieren. Wie wäre es zum Beispiel mit einer Rücksetzfunktion oder der Möglichkeit negative Zahlen eingeben zu können?
