@@ -10,7 +10,5 @@ Das Buch wurde mit [Typst](https://typst.app/) erstellt. Um das Buch zu bauen [i
 
 ## License
 
-Copyright © David Pierre Sugar
-
-MIT No Attribution
+Copyright © David Pierre Sugar. This book is licensed by the [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) Creative Commons Attribution 4.0 International Public License.
 
